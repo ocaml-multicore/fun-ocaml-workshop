@@ -1,0 +1,11 @@
+_build
+tmp
+*~
+\.\#*
+\#*#
+*.install
+*.native
+*.byte
+*.merlin
+*.json
+node_modules
