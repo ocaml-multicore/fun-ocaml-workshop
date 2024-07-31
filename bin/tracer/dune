@@ -1,4 +1,5 @@
 (executable
  (public_name ray_tracer)
+ (package ray_tracer)
  (name main)
  (libraries ray_tracer graphics))

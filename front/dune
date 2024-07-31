@@ -1,0 +1,4 @@
+(executable
+ (name front)
+ (modes js)
+ (libraries protocol brr))

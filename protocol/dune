@@ -1,0 +1,6 @@
+(library
+ (public_name funocaml_protocol)
+ (name protocol)
+ (libraries yojson)
+ (preprocess
+  (pps ppx_deriving_yojson)))

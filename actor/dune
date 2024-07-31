@@ -1,0 +1,4 @@
+(library
+ (public_name funocaml_actor)
+ (name actor)
+ (libraries eio eio.unix cohttp-eio uri protocol imagelib base64))
