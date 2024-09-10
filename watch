@@ -1,0 +1,22 @@
+#!/bin/bash -e
+
+set -eo pipefail
+
+PROJECT="FunOCaml"
+ACTOR="test/test_eio.exe"
+NAME="Actor $RANDOM"
+
+open http://localhost:8080
+
+tmux start-server
+tmux new-session -d -s "$PROJECT"
+
+tmux split-window -v
+
+tmux select-pane -t 0
+tmux send-keys "_build/default/bin/server/server.exe" C-m
+
+tmux select-pane -t 1
+tmux send-keys "dune exec -w -- $ACTOR '$NAME'" C-m
+
+tmux attach-session -t "$PROJECT"
