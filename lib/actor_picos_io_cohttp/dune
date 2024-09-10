@@ -1,0 +1,10 @@
+(library
+ (public_name funocaml_actor_picos_io_cohttp)
+ (name actor_picos_io_cohttp)
+ (libraries
+  base64
+  imagelib
+  picos_io_cohttp
+  picos_std.structured
+  protocol
+  uri))

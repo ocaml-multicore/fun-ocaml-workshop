@@ -1,3 +1,13 @@
 (executable
  (name test_eio)
+ (modules test_eio)
  (libraries eio_main actor_eio imagelib))
+
+(executable
+ (name test_picos_io_cohttp)
+ (modules test_picos_io_cohttp)
+ (libraries
+  actor_picos_io_cohttp
+  imagelib
+  picos_mux.multififo
+  picos_std.structured))

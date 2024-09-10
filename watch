@@ -3,9 +3,11 @@
 set -eo pipefail
 
 PROJECT="FunOCaml"
-ACTOR="test/test_eio.exe"
+ACTOR="test/test_picos_io_cohttp.exe"
 NAME="Actor $RANDOM"
 URL="http://localhost:8080"
+
+dune build
 
 if which open > /dev/null; then
   open $URL

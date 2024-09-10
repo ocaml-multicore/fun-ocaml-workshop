@@ -47,6 +47,22 @@
    (>= 4.4.0))))
 
 (package
+ (name funocaml_actor_picos_io_cohttp)
+ (synopsis
+  "FunOCaml Multicore Workshop: actor library for Picos through IO Cohttp")
+ (depends
+  (picos_io_cohttp
+   (>= 0.5.0))
+  (funocaml_protocol
+   (= :version))
+  (imagelib
+   (>= 20221222))
+  (base64
+   (>= 3.5.1))
+  (uri
+   (>= 4.4.0))))
+
+(package
  (name funocaml_server)
  (synopsis "FunOCaml Multicore Workshop: server")
  (depends
