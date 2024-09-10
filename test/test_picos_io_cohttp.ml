@@ -1,65 +1,71 @@
 open Picos_std_structured
 module Actor = Actor_picos_io_cohttp
 
-let quality = 255
-
-let iteration_count x0 y0 =
-  let rec iter' x y n =
-    if n = quality then 255
-    else if (x *. x) +. (y *. y) > 4.0 then n * 256 / quality
-    else iter' ((x *. x) -. (y *. y) +. x0) ((2.0 *. x *. y) +. y0) (succ n)
-  in
-  iter' 0.0 0.0 0
-
-let iteration_count x0 y0 =
-  iteration_count ((4.0 *. x0) -. 2.0) ((4.0 *. y0) -. 2.0)
-
-let color x y =
-  let n = iteration_count (float x /. 1408.0) (float y /. 1408.0) in
-  (n, n, n)
-
-let myimage x' y' w h =
-  let img = Image.create_rgb w h in
-  for x = 0 to w - 1 do
-    for y = 0 to h - 1 do
-      let r, g, b = color (x + x') (y + y') in
-      Image.write_rgb img x y r g b
-    done
-  done;
-  img
-
-(* let split sub _ = [sub] *)
-(* let rec split (sub: Protocol.sub) n = *)
-(*   if sub.w = 1 && sub.h = 1 then [sub] *)
-(*   else if sub.w = 0 || sub.h = 0 then [] *)
-(*   else let left, right = if sub.w > sub.h then Actor.vsplit sub else Actor.hsplit sub in *)
-(*        let n = n - 1 in *)
-(*        split left n @ split right n *)
-
-let rec split (sub : Protocol.sub) n =
-  if n = 0 then [ sub ]
-  else
-    let left, right =
-      if sub.w > sub.h then Actor.vsplit sub else Actor.hsplit sub
-    in
-    let n = n - 1 in
-    split left n @ split right n
-
+let n_domains = 4
 let username = Sys.argv.(1)
+let width_and_height = 1408
+
+module Renderer = struct
+  open Ray_tracer
+
+  type t = { rays : Ray.rays; scene : Scene.scene; max_depth : int }
+
+  let create () =
+    let camera =
+      Camera.create ~image_width:width_and_height ~ratio:1.0
+        ~camera_center:(Pos.create 0. 0. 0.) ~focal_length:1. ()
+    in
+    let viewport = Camera.create_viewport ~viewport_height:2.0 camera in
+    let rays = Ray.build_rays camera viewport in
+    let scene : Scene.scene =
+      let open Scene in
+      [
+        {
+          form = sphere (Pos.create 0. (-1000.5) (-1.)) 1000.;
+          material = Material.create_lambertian (Color.rgb 0.5 0.5 0.5);
+        };
+        {
+          form = Scene.sphere (Pos.create 0. 0. (-1.)) 0.5;
+          material = Material.create_lambertian (Color.rgb 0.4 0.2 0.);
+        };
+      ]
+    in
+    { rays; scene; max_depth = 10 }
+
+  let render { rays; scene; max_depth } (sub : Protocol.sub) =
+    let img = Image.create_rgb sub.w sub.h in
+
+    for y = sub.y to sub.y + sub.h - 1 do
+      for x = sub.x to sub.x + sub.w - 1 do
+        let c = Ray.ray_to_color ~max_depth scene rays.(y).(x) in
+        Image.write_rgb img (x - sub.x) (y - sub.y)
+          (Float.to_int (c.r *. 255.0))
+          (Float.to_int (c.g *. 255.0))
+          (Float.to_int (c.b *. 255.0))
+      done
+    done;
+
+    img
+end
+
+(* *)
 
 let main () =
-  let client = Actor.client ~username in
+  let renderer = Renderer.create () in
 
-  while true do
-    let sub = Actor.request client in
-    let parts = split sub 3 in
-    List.iter
-      (fun sub ->
-        let open Protocol in
-        let img = myimage sub.x sub.y sub.w sub.h in
-        Control.sleep ~seconds:(0.2 +. Random.float 0.03);
-        Actor.respond client sub img)
-      parts
+  Flock.join_after @@ fun () ->
+  for _ = 1 to n_domains do
+    Flock.fork @@ fun () ->
+    let client = Actor.client ~username in
+
+    while true do
+      let sub = Actor.request client in
+      let img = Renderer.render renderer sub in
+
+      Actor.respond client sub img;
+
+      Control.sleep ~seconds:(0.2 +. Random.float 0.03)
+    done
   done
 
-let () = Picos_mux_multififo.run_on ~n_domains:1 main
+let () = Picos_mux_multififo.run_on ~n_domains main

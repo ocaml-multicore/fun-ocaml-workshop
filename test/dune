@@ -10,4 +10,5 @@
   actor_picos_io_cohttp
   imagelib
   picos_mux.multififo
-  picos_std.structured))
+  picos_std.structured
+  ray_tracer))

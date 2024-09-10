@@ -60,6 +60,9 @@ one of the objects of [scene]. *)
 
 (** {2 Color functions} *)
 
+val ray_to_color : max_depth:int -> Scene.scene -> ray -> Color.t
+(** *)
+
 val rays_to_colors :
   ?progress_bar:bool ->
   ?nsamples:int ->
