@@ -64,3 +64,6 @@ val create_viewport : ?viewport_height:float -> camera -> viewport
 (** [create_viewport] create a new viewport. A viewport is the matrix of positions 
 such as the casted rays go from the camera position to each of this positions. 
 Default [viewport_height] value is 2.*)
+
+val create_subviewport :
+  x:float -> y:float -> pixel_size:float -> camera -> viewport

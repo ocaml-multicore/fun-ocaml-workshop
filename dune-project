@@ -39,6 +39,8 @@
  (depends
   (funocaml_protocol
    (= :version))
+  (cohttp-eio
+   (>= 6.0.0~beta2))
   (imagelib
    (>= 20221222))
   (base64
