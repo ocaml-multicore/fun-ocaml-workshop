@@ -1,3 +1,5 @@
+module Actor = Actor_eio
+
 let quality = 255
 
 let iteration_count x0 y0 =

@@ -1,3 +1,3 @@
 (executable
- (name test)
- (libraries eio_main actor imagelib))
+ (name test_eio)
+ (libraries eio_main actor_eio imagelib))
