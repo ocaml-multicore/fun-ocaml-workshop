@@ -1,4 +1,4 @@
-type t = { xp : float; yp : float; zp : float }
+type t = { xp : float; yp : float; zp : float } [@@deriving yojson]
 
 let create xp yp zp = { xp; yp; zp }
 

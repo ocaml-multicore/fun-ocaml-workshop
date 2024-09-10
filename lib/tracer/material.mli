@@ -30,6 +30,7 @@ type t =
   | Lambertian of Color.t
   | Metal of { albedo : Color.t; fuzz : float }
   | Dielectric of { albedo : Color.t; refraction_index : float }
+[@@deriving yojson]
 
 (** {1 Constructors} *)
 

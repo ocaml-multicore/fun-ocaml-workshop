@@ -1,3 +1,4 @@
 (library
  (name ray_tracer)
- (public_name ray_tracer))
+ (public_name ray_tracer)
+ (preprocess (pps ppx_deriving_yojson)))

@@ -1,7 +1,7 @@
 (** This module defines a type to describe vectors and provides functions to 
 manipulate them. *)
 
-type t = { xv : float; yv : float; zv : float }
+type t = { xv : float; yv : float; zv : float } [@@deriving yojson]
 (** Defines a vector. *)
 
 val create : float -> float -> float -> t

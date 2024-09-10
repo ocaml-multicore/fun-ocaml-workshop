@@ -4,6 +4,7 @@ type t =
   | Lambertian of Color.t
   | Metal of { albedo : Color.t; fuzz : float }
   | Dielectric of { albedo : Color.t; refraction_index : float }
+[@@deriving yojson]
 
 let create_lambertian albedo = Lambertian albedo
 let create_flat color = Flat color

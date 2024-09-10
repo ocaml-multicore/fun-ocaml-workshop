@@ -24,3 +24,9 @@ val sphere : Pos.t -> float -> form
 
 val plane : Vect.t -> Pos.t -> form
 (** [plane normal point] *)
+
+val to_string : scene -> string
+(** [to_string scene] *)
+
+val of_string : string -> scene
+(** [of_string yojson_scene] *)

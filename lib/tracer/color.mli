@@ -1,6 +1,6 @@
 (** This module provides functionality for working with RGB colors. *)
 
-type t = { r : float; g : float; b : float }
+type t = { r : float; g : float; b : float } [@@deriving yojson]
 (** An RGB color represented by its red, green, and blue values. *)
 
 val rgb : float -> float -> float -> t

@@ -1,6 +1,7 @@
 (** This module defines position as well as utilitary functions for it. *)
 
-type t = { xp : float; yp : float; zp : float }
+type t = { xp : float; yp : float; zp : float } [@@deriving yojson]
+
 (** A position is a defined by its 3 coordinates. *)
 
 val create : float -> float -> float -> t

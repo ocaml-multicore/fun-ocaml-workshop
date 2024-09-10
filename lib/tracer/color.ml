@@ -1,4 +1,4 @@
-type t = { r : float; g : float; b : float }
+type t = { r : float; g : float; b : float } [@@deriving yojson]
 
 let rgb r g b = { r; g; b }
 let white = rgb 1. 1. 1.
