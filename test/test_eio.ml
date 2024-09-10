@@ -7,11 +7,11 @@ module Test_scene = struct
         ~focal_length:1. ()
     in
     let viewport = Camera.create_subviewport ~x ~y ~pixel_size camera in
-    (Ray.build_rays camera viewport, viewport)
+    (camera, viewport)
 
   let _example5 ?(progress_bar = false) ~x ~y ~w ~h ~pixel_size () =
     let ratio = float w /. float h in
-    let rays, viewport =
+    let camera, viewport =
       standart_config ~image_width:w ~ratio ~x ~y ~pixel_size
     in
     let scene : Scene.scene =
@@ -27,12 +27,12 @@ module Test_scene = struct
         };
       ]
     in
-    Ray.rays_to_colors ~progress_bar ~nsamples:50 ~max_depth:20 scene viewport
-      rays
+    Ray.rays_to_colors ~progress_bar ~nsamples:50 ~max_depth:20 scene camera
+      viewport
 
   let example6 ?(progress_bar = false) ~x ~y ~w ~h ~pixel_size () =
     let ratio = float w /. float h in
-    let rays, viewport =
+    let camera, viewport =
       standart_config ~image_width:w ~ratio ~x ~y ~pixel_size
     in
     let scene : Scene.scene =
@@ -60,8 +60,8 @@ module Test_scene = struct
         };
       ]
     in
-    Ray.rays_to_colors ~progress_bar ~nsamples:50 ~max_depth:20 scene viewport
-      rays
+    Ray.rays_to_colors ~progress_bar ~nsamples:50 ~max_depth:20 scene camera
+      viewport
 
   let render ~x ~y ~w ~h ~pixel_size =
     example6 ~progress_bar:true ~x ~y ~w ~h ~pixel_size ()

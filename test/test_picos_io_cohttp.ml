@@ -8,7 +8,12 @@ let width_and_height = 1408
 module Renderer = struct
   open Ray_tracer
 
-  type t = { rays : Ray.rays; scene : Scene.scene; max_depth : int }
+  type t = {
+    rays : Ray.rays;
+    scene : Scene.scene;
+    max_depth : int;
+    viewport : Camera.viewport;
+  }
 
   let create () =
     let camera =
@@ -30,14 +35,14 @@ module Renderer = struct
         };
       ]
     in
-    { rays; scene; max_depth = 10 }
+    { rays; scene; max_depth = 10; viewport }
 
-  let render { rays; scene; max_depth } (sub : Protocol.sub) =
+  let render { rays; scene; max_depth; viewport } (sub : Protocol.sub) =
     let img = Image.create_rgb sub.w sub.h in
 
     for y = sub.y to sub.y + sub.h - 1 do
       for x = sub.x to sub.x + sub.w - 1 do
-        let c = Ray.ray_to_color ~max_depth scene rays.(y).(x) in
+        let c = Ray.ray_to_color ~max_depth scene viewport rays.(y).(x) in
         Image.write_rgb img (x - sub.x) (y - sub.y)
           (Float.to_int (c.r *. 255.0))
           (Float.to_int (c.g *. 255.0))

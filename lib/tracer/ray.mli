@@ -78,8 +78,8 @@ val rays_to_colors :
   ?nsamples:int ->
   ?max_depth:int ->
   Scene.scene ->
+  Camera.camera ->
   Camera.viewport ->
-  rays ->
   Color.t array array
 (** [rays_to_colors ?progress_bar scene rays] computes the colors of each ray.
 {ul 

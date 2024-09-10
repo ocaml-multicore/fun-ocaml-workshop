@@ -13,10 +13,10 @@ let standart_config ~image_width ~ratio =
       ~focal_length:1. ()
   in
   let viewport = Camera.create_viewport ~viewport_height:2.0 camera in
-  (Ray.build_rays camera viewport, viewport)
+  (camera, viewport)
 
 let example5 ?(progress_bar = false) ~image_width ~ratio () =
-  let rays, viewport = standart_config ~image_width ~ratio in
+  let camera, viewport = standart_config ~image_width ~ratio in
   let scene : Scene.scene =
     let open Scene in
     [
@@ -30,12 +30,12 @@ let example5 ?(progress_bar = false) ~image_width ~ratio () =
       };
     ]
   in
-  Ray.rays_to_colors ~progress_bar ~nsamples:50 ~max_depth:20 scene viewport
-    rays
+  Ray.rays_to_colors ~progress_bar ~nsamples:50 ~max_depth:20 scene camera
+    viewport
   |> convert_colors
 
 let example6 ?(progress_bar = false) ~image_width ~ratio () =
-  let rays, viewport = standart_config ~image_width ~ratio in
+  let camera, viewport = standart_config ~image_width ~ratio in
   let scene : Scene.scene =
     let open Scene in
     [
@@ -57,6 +57,6 @@ let example6 ?(progress_bar = false) ~image_width ~ratio () =
       };
     ]
   in
-  Ray.rays_to_colors ~progress_bar ~nsamples:50 ~max_depth:20 scene viewport
-    rays
+  Ray.rays_to_colors ~progress_bar ~nsamples:50 ~max_depth:20 scene camera
+    viewport
   |> convert_colors

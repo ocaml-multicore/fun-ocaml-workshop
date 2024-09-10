@@ -196,26 +196,24 @@ let ray_to_color ?(nsamples = 1) ?(max_depth = 10) scene viewport ray =
    else loop Color.black nsamples)
   |> Color.clamp |> Color.linear_to_gamma
 
-let build_rays (camera : Camera.camera) (viewport : Camera.viewport) : rays =
+let[@inline] print_progress height jj =
+  if jj mod 100 = 0 then
+    Format.printf "\rScanlines remaining: %d @." (height - jj)
+
+let rays_to_colors ?(progress_bar = false) ?(nsamples = 1) ?(max_depth = 10)
+    (scene : Scene.scene) (camera : Camera.camera) (viewport : Camera.viewport)
+    =
   let camera_center = Camera.camera_center camera in
-  let rays : Vect.t array array =
-    Array.make_matrix (Camera.image_height camera) (Camera.image_width camera)
-    @@ Vect.create 0. 0. 0.
-  in
-  Utils.map2Dij
-    (fun ii jj _ ->
+  let camera_height = Camera.image_height camera in
+  Array.init_matrix (Camera.image_height camera) (Camera.image_width camera)
+    (fun jj ii ->
+      if progress_bar && ii = 0 then print_progress camera_height jj;
+
       let pixel_center =
         viewport.upper_left
         |> Pos.offset (Vect.scale (float_of_int ii) viewport.pixel_delta_u)
         |> Pos.offset (Vect.scale (float_of_int jj) viewport.pixel_delta_v)
       in
       let ray_direction = Pos.vector camera_center pixel_center in
-      create ray_direction camera_center)
-    rays
-
-let rays_to_colors ?(progress_bar = false) ?(nsamples = 1) ?(max_depth = 10)
-    (scene : Scene.scene) (camera : Camera.camera) (viewport : Camera.viewport)
-    (rays : rays) =
-  Utils.map2D ~progress_bar
-    (fun ray -> ray_to_color ~max_depth ~nsamples scene viewport ray)
-    rays
+      let ray = create ray_direction camera_center in
+      ray_to_color ~max_depth ~nsamples scene viewport ray)
