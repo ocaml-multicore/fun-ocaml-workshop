@@ -84,32 +84,25 @@ module Make (Client : HTTP_CLIENT) = struct
 
   open Ray_tracer
 
+  (* Camera (we actually only need the camera center) and viewport should be provided by the server *)
   let s = 1408.0
-  let zoom = 2.0
-  let pixel_size = zoom /. s
 
-  let standart_config ~image_width ~ratio ~x ~y ~pixel_size =
-    let camera =
-      Camera.create ~image_width ~ratio ~camera_center:(Pos.create 0. 0. 0.)
-        ~focal_length:1. ()
-    in
-    let viewport = Camera.create_subviewport ~x ~y ~pixel_size camera in
-    (camera, viewport)
+  let camera =
+    Camera.create ~image_width:(int_of_float s) ~ratio:1.0
+      ~camera_center:(Pos.create 0. 0. 0.) ~focal_length:1. ()
+
+  let viewport = Ray_tracer.Camera.create_viewport ~viewport_height:2. camera
 
   let render job =
     let { Protocol.task = { scene }; sub = { x; y; w; h } } = job in
-    let s = 1408.0 in
-    let zoom = 2.0 in
-    let sc v = (1.0 *. float v /. s) -. 0.5 in
-    let cx = zoom *. sc x in
-    let cy = zoom *. (0.0 -. sc y) in
-    let ratio = float w /. float h in
-    let camera, viewport =
-      standart_config ~image_width:w ~ratio ~x:cx ~y:cy ~pixel_size
+    let subviewport =
+      Camera.create_subviewport ~upper_left:(x, y) ~viewport_width:w
+        ~viewport_height:h viewport
     in
     let arr =
       Ray.rays_to_colors ~progress_bar:true ~nsamples:50 ~max_depth:20 scene
-        camera viewport
+        (Camera.camera_center camera)
+        subviewport
     in
     let img = Image.create_rgb w h in
     for x = 0 to w - 1 do

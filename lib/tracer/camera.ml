@@ -29,8 +29,9 @@ type viewport = {
   upper_left : Pos.t;
   pixel_delta_u : Vect.t;
   pixel_delta_v : Vect.t;
-  viewport_width : float;
-  viewport_height : float;
+  viewport_width : int;
+  viewport_height : int;
+  pixel_size : float;
 }
 [@@deriving yojson]
 
@@ -55,27 +56,39 @@ let create_viewport ?(viewport_height = 2.) camera =
     upper_left = upper_left_pixel |> Pos.change_basis m;
     pixel_delta_u = pixel_delta_u |> Vect.change_basis m;
     pixel_delta_v = pixel_delta_v |> Vect.change_basis m;
-    viewport_width;
-    viewport_height;
+    viewport_width = camera.image_width;
+    viewport_height = camera.image_height;
+    pixel_size;
   }
 
-let create_subviewport ~x ~y ~pixel_size camera =
-  let viewport_height = pixel_size *. float_of_int camera.image_height in
-  let viewport_width = pixel_size *. float_of_int camera.image_width in
-  let upper_left_corner = Pos.create x y (-.camera.focal_length) in
-  let upper_left_pixel =
-    Pos.create
-      (upper_left_corner.xp +. (pixel_size /. 2.))
-      (upper_left_corner.yp -. (pixel_size /. 2.))
-      upper_left_corner.zp
+(* let _create_subviewport ~x ~y ~pixel_size camera =
+   let viewport_height = pixel_size *. float_of_int camera.image_height in
+   let viewport_width = pixel_size *. float_of_int camera.image_width in
+   let upper_left_corner = Pos.create x y (-.camera.focal_length) in
+   let upper_left_pixel =
+     Pos.create
+       (upper_left_corner.xp +. (pixel_size /. 2.))
+       (upper_left_corner.yp -. (pixel_size /. 2.))
+       upper_left_corner.zp
+   in
+   let pixel_delta_u = Vect.scale pixel_size camera.ux in
+   let pixel_delta_v = Vect.scale (-.pixel_size) camera.uy in
+   let m = Vect.change_of_basis camera.ux camera.uy camera.uz in
+   {
+     upper_left = upper_left_pixel |> Pos.change_basis m;
+     pixel_delta_u = pixel_delta_u |> Vect.change_basis m;
+     pixel_delta_v = pixel_delta_v |> Vect.change_basis m;
+     viewport_width;
+     viewport_height;
+     pixel_size;
+   } *)
+
+let create_subviewport ~upper_left ~viewport_width ~viewport_height viewport =
+  let upper_left =
+    viewport.upper_left
+    |> Pos.offset
+         (Vect.scale (fst upper_left |> float_of_int) viewport.pixel_delta_u)
+    |> Pos.offset
+         (Vect.scale (snd upper_left |> float_of_int) viewport.pixel_delta_v)
   in
-  let pixel_delta_u = Vect.scale pixel_size camera.ux in
-  let pixel_delta_v = Vect.scale (-.pixel_size) camera.uy in
-  let m = Vect.change_of_basis camera.ux camera.uy camera.uz in
-  {
-    upper_left = upper_left_pixel |> Pos.change_basis m;
-    pixel_delta_u = pixel_delta_u |> Vect.change_basis m;
-    pixel_delta_v = pixel_delta_v |> Vect.change_basis m;
-    viewport_width;
-    viewport_height;
-  }
+  { viewport with upper_left; viewport_width; viewport_height }

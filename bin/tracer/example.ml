@@ -30,7 +30,8 @@ let example5 ?(progress_bar = false) ~image_width ~ratio () =
       };
     ]
   in
-  Ray.rays_to_colors ~progress_bar ~nsamples:50 ~max_depth:20 scene camera
+  Ray.rays_to_colors ~progress_bar ~nsamples:50 ~max_depth:20 scene
+    (Camera.camera_center camera)
     viewport
   |> convert_colors
 
@@ -57,6 +58,7 @@ let example6 ?(progress_bar = false) ~image_width ~ratio () =
       };
     ]
   in
-  Ray.rays_to_colors ~progress_bar ~nsamples:50 ~max_depth:20 scene camera
+  Ray.rays_to_colors ~progress_bar ~nsamples:50 ~max_depth:20 scene
+    (Camera.camera_center camera)
     viewport
   |> convert_colors

@@ -46,8 +46,9 @@ type viewport = {
   upper_left : Pos.t;
   pixel_delta_u : Vect.t;
   pixel_delta_v : Vect.t;
-  viewport_width : float;
-  viewport_height : float;
+  viewport_width : int;
+  viewport_height : int;
+  pixel_size : float;
 }
 [@@deriving yojson]
 (** Virtual viewport throught which the ray pass. It is located on the [uz] axis
@@ -67,4 +68,8 @@ such as the casted rays go from the camera position to each of this positions.
 Default [viewport_height] value is 2.*)
 
 val create_subviewport :
-  x:float -> y:float -> pixel_size:float -> camera -> viewport
+  upper_left:int * int ->
+  viewport_width:int ->
+  viewport_height:int ->
+  viewport ->
+  viewport

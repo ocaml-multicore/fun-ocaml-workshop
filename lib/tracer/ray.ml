@@ -201,13 +201,11 @@ let[@inline] print_progress height jj =
     Format.printf "\rScanlines remaining: %d @." (height - jj)
 
 let rays_to_colors ?(progress_bar = false) ?(nsamples = 1) ?(max_depth = 10)
-    (scene : Scene.scene) (camera : Camera.camera) (viewport : Camera.viewport)
-    =
-  let camera_center = Camera.camera_center camera in
-  let camera_height = Camera.image_height camera in
-  Array.init_matrix (Camera.image_height camera) (Camera.image_width camera)
+    (scene : Scene.scene) camera_center (viewport : Camera.viewport) =
+  let viewport_height = viewport.viewport_height in
+  Array.init_matrix viewport.viewport_height viewport.viewport_width
     (fun jj ii ->
-      if progress_bar && ii = 0 then print_progress camera_height jj;
+      if progress_bar && ii = 0 then print_progress viewport_height jj;
 
       let pixel_center =
         viewport.upper_left

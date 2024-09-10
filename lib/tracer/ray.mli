@@ -67,7 +67,7 @@ val ray_to_color :
   Camera.viewport ->
   ray ->
   Color.t
-(** [ray_to_color ?progress_bar scene ray] computes the colors of each ray.
+(** [ray_to_color ?progress_bar scene viewport ray] computes the colors of each ray.
 {ul 
 {- [nsamples] defines the number of sampled rays per pixel. By default, it is 1 
 (no sampling). }
@@ -78,10 +78,10 @@ val rays_to_colors :
   ?nsamples:int ->
   ?max_depth:int ->
   Scene.scene ->
-  Camera.camera ->
+  Pos.t ->
   Camera.viewport ->
   Color.t array array
-(** [rays_to_colors ?progress_bar scene rays] computes the colors of each ray.
+(** [rays_to_colors ?progress_bar scene camera_center viewport] computes the colors of each ray.
 {ul 
 {- [nsamples] defines the number of sampled rays per pixel. By default, it is 1 
 (no sampling). }
