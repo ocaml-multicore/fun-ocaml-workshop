@@ -60,8 +60,18 @@ one of the objects of [scene]. *)
 
 (** {2 Color functions} *)
 
-val ray_to_color : max_depth:int -> Scene.scene -> ray -> Color.t
-(** *)
+val ray_to_color :
+  ?nsamples:int ->
+  ?max_depth:int ->
+  Scene.scene ->
+  Camera.viewport ->
+  ray ->
+  Color.t
+(** [ray_to_color ?progress_bar scene ray] computes the colors of each ray.
+{ul 
+{- [nsamples] defines the number of sampled rays per pixel. By default, it is 1 
+(no sampling). }
+{- [max_depth] defines the maximum number of bounces of a ray. }}*)
 
 val rays_to_colors :
   ?progress_bar:bool ->

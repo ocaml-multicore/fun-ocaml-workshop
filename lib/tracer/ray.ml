@@ -133,7 +133,7 @@ let compute_hit_point (scene : Scene.scene) ray =
   in
   loop ray None scene
 
-let ray_to_color ~max_depth scene ray =
+let ray_to_color_ max_depth scene ray =
   let rec loop ray depth =
     if depth <= 0 then Color.black
     else
@@ -176,10 +176,10 @@ let randomly_move_ray ray deltau deltav =
   let dv = Vect.scale (Random.float 1. -. 0.5) deltav in
   Vect.add (Vect.add ray du) dv |> Vect.unit_vector
 
-let sample_pixel ~nsamples ~max_depth viewport scene ray =
+let ray_to_color ?(nsamples = 1) ?(max_depth = 10) scene viewport ray =
   let rec loop acc_color n =
     match n with
-    | 0 -> Color.avg nsamples acc_color |> Color.clamp
+    | 0 -> Color.avg nsamples acc_color
     | _ ->
         let new_ray =
           create
@@ -189,18 +189,33 @@ let sample_pixel ~nsamples ~max_depth viewport scene ray =
             ray.origin
         in
 
-        let color = ray_to_color ~max_depth scene new_ray in
+        let color = ray_to_color_ max_depth scene new_ray in
         loop (Color.add acc_color color) (n - 1)
   in
-  loop Color.black nsamples
+  (if nsamples = 1 then ray_to_color_ max_depth scene ray
+   else loop Color.black nsamples)
+  |> Color.clamp |> Color.linear_to_gamma
+
+let build_rays (camera : Camera.camera) (viewport : Camera.viewport) : rays =
+  let camera_center = Camera.camera_center camera in
+  let rays : Vect.t array array =
+    Array.make_matrix (Camera.image_height camera) (Camera.image_width camera)
+    @@ Vect.create 0. 0. 0.
+  in
+  Utils.map2Dij
+    (fun ii jj _ ->
+      let pixel_center =
+        viewport.upper_left
+        |> Pos.offset (Vect.scale (float_of_int ii) viewport.pixel_delta_u)
+        |> Pos.offset (Vect.scale (float_of_int jj) viewport.pixel_delta_v)
+      in
+      let ray_direction = Pos.vector camera_center pixel_center in
+      create ray_direction camera_center)
+    rays
 
 let rays_to_colors ?(progress_bar = false) ?(nsamples = 1) ?(max_depth = 10)
-    (scene : Scene.scene) viewport (rays : rays) =
+    (scene : Scene.scene) (camera : Camera.camera) (viewport : Camera.viewport)
+    (rays : rays) =
   Utils.map2D ~progress_bar
-    (fun ray ->
-      let color =
-        if nsamples = 1 then ray_to_color ~max_depth scene ray
-        else sample_pixel ~max_depth ~nsamples viewport scene ray
-      in
-      Color.linear_to_gamma color)
+    (fun ray -> ray_to_color ~max_depth ~nsamples scene viewport ray)
     rays
