@@ -78,3 +78,7 @@ module Make (Client : HTTP_CLIENT) = struct
     let bottom = { req with y = req.y + h2; h = req.h - h2 } in
     (top, bottom)
 end
+
+let () =
+  (* Try to work around Uri being not thread safe *)
+  Uri.of_string "http://[::1]:8080" |> ignore
