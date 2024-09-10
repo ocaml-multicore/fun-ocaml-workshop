@@ -5,8 +5,13 @@ set -eo pipefail
 PROJECT="FunOCaml"
 ACTOR="test/test_eio.exe"
 NAME="Actor $RANDOM"
+URL="http://localhost:8080"
 
-open http://localhost:8080
+if which open > /dev/null; then
+  open $URL
+elif which xdg-open > /dev/null; then
+  xdg-open $URL
+fi
 
 tmux start-server
 tmux new-session -d -s "$PROJECT"
