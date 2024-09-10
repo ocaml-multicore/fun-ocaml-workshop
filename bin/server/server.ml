@@ -144,12 +144,12 @@ let () =
              Lwt.return
              @@ Dream.response
                   ~headers:[ ("Content-Type", "text/css") ]
-                  [%blob "server/style.css"]);
+                  [%blob "bin/server/style.css"]);
          Dream.get "/front.js" (fun _ ->
              Lwt.return
              @@ Dream.response
                   ~headers:[ ("Content-Type", "text/javascript") ]
-                  [%blob "front/front.bc.js"]);
+                  [%blob "bin/front/front.bc.js"]);
          Dream.get "/watch" (fun _ ->
              Dream.websocket @@ fun ws ->
              clients := ws :: !clients;
