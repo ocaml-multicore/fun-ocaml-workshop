@@ -34,12 +34,12 @@
    (>= 3.7.0))))
 
 (package
- (name funocaml_actor_eio)
- (synopsis "FunOCaml Multicore Workshop: actor library for Eio")
+ (name funocaml_actor_shared)
+ (synopsis "FunOCaml Multicore Workshop: actor library (shared)")
  (depends
   (funocaml_protocol
    (= :version))
-  (cohttp-eio
+  (cohttp
    (>= 6.0.0~beta2))
   (imagelib
    (>= 20221222))
@@ -49,20 +49,23 @@
    (>= 4.4.0))))
 
 (package
+ (name funocaml_actor_eio)
+ (synopsis "FunOCaml Multicore Workshop: actor library for Eio")
+ (depends
+  (funocaml_actor_shared
+   (= :version))
+  (cohttp-eio
+   (>= 6.0.0~beta2))))
+
+(package
  (name funocaml_actor_picos_io_cohttp)
  (synopsis
   "FunOCaml Multicore Workshop: actor library for Picos through IO Cohttp")
  (depends
-  (picos_io_cohttp
-   (>= 0.5.0))
-  (funocaml_protocol
+  (funocaml_actor_shared
    (= :version))
-  (imagelib
-   (>= 20221222))
-  (base64
-   (>= 3.5.1))
-  (uri
-   (>= 4.4.0))))
+  (picos_io_cohttp
+   (>= 0.5.0))))
 
 (package
  (name funocaml_server)

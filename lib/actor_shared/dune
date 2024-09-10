@@ -1,0 +1,4 @@
+(library
+ (public_name funocaml_actor_shared)
+ (name actor_shared)
+ (libraries http uri protocol imagelib base64))

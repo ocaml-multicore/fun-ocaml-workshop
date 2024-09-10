@@ -106,10 +106,9 @@ let username = Sys.argv.(1)
 let () =
   Eio_main.run @@ fun env ->
   let _clock = Eio.Stdenv.clock env in
-  let net = Eio.Stdenv.net env in
   let dmgr = Eio.Stdenv.domain_mgr env in
 
-  let client = Actor.client ~net ~username in
+  let client = Actor.client env ~username in
 
   Eio.Fiber.all
   @@ List.init (Domain.recommended_domain_count ())

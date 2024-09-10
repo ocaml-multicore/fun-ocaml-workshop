@@ -1,12 +1,10 @@
 type client
 
-val client : net:_ Eio.Net.t -> username:string -> client
+val client :
+  < clock : float Eio.Time.clock_ty Eio.Time.clock
+  ; net : [> `Generic ] Eio.Net.ty Eio.Net.t
+  ; .. > ->
+  username:string ->
+  client
 
-type job = Protocol.sub = { x : int; y : int; w : int; h : int }
-
-val request : client -> job
-val respond : client -> job -> Image.image -> unit
-
-(* *)
-val vsplit : job -> job * job
-val hsplit : job -> job * job
+include Actor_shared.S with type client := client
