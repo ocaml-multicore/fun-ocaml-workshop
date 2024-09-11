@@ -1,7 +1,7 @@
 open Lwt.Syntax
 module H = Tyxml_html
 
-let cell_size = 64
+let cell_size = 128
 let width = 1408
 let height = 1408
 
@@ -27,11 +27,11 @@ let knuth_shuffle a =
 let clients = ref []
 
 type state = {
-  mutable current : Ray_tracer.Scene.scene;
+  current : Ray_tracer.Scene.scene;
   todos : Protocol.sub Queue.t;
+  mutable remaining : int;
+  is_done : bool array array;
 }
-
-let state = { current = Scenes.random_scene (); todos = Queue.create () }
 
 let make_state () =
   let () =
@@ -39,7 +39,6 @@ let make_state () =
       (fun () -> Lwt_list.iter_p (fun ws -> send ws Protocol.Fresh) !clients)
       (fun _ -> ())
   in
-  state.current <- Scenes.random_scene ();
   let arr =
     Array.concat
       (List.init (width / cell_size) (fun x ->
@@ -49,14 +48,52 @@ let make_state () =
                { Protocol.x; y; w = cell_size; h = cell_size })))
   in
   knuth_shuffle arr;
-  Array.iter (fun x -> Queue.add x state.todos) arr
+  let todos = Queue.create () in
+  Array.iter (fun x -> Queue.add x todos) arr;
+  {
+    current = Scenes.random_scene ();
+    todos;
+    remaining = width * height;
+    is_done = Array.make_matrix width height false;
+  }
+
+let state = ref (make_state ())
+
+let is_done (rect : Protocol.sub) =
+  let exception Todo in
+  let state = !state in
+  let img = state.is_done in
+  try
+    for y = rect.y to rect.y + rect.h - 1 do
+      for x = rect.x to rect.x + rect.w - 1 do
+        if not img.(y).(x) then raise Todo
+      done
+    done;
+    true
+  with Todo -> false
 
 let rec pop () =
+  let state = !state in
   match Queue.pop state.todos with
-  | exception Queue.Empty ->
-      make_state ();
-      pop ()
-  | sub_image -> sub_image
+  | exception Queue.Empty -> None
+  | sub_image when is_done sub_image -> pop ()
+  | sub_image ->
+      Queue.push sub_image state.todos;
+      Some sub_image
+
+let mark_done (rect : Protocol.sub) =
+  let updated = ref false in
+  let state = !state in
+  let img = state.is_done in
+  for y = rect.y to rect.y + rect.h - 1 do
+    for x = rect.x to rect.x + rect.w - 1 do
+      if not img.(y).(x) then (
+        updated := true;
+        img.(y).(x) <- true;
+        state.remaining <- state.remaining - 1)
+    done
+  done;
+  !updated
 
 let users = Hashtbl.create 16
 
@@ -98,23 +135,36 @@ let () =
                          ])));
          Dream.get "/request" (fun query ->
              let username, color = get_user query in
-             let sub = pop () in
-             let job = { Protocol.task = { scene = state.current }; sub } in
-             let () =
-               Lwt.dont_wait
-                 (fun () ->
-                   Lwt_list.iter_p
-                     (fun ws ->
-                       send ws
-                       @@ Protocol.Update
-                            { username; color; position = sub; status = Start })
-                     !clients)
-                 (fun _ -> ())
-             in
-             Lwt.return
-               (Dream.response
-                  ~headers:[ ("Content-Type", "text/json") ]
-                  (Yojson.Safe.to_string @@ Protocol.job_to_yojson job)));
+             match pop () with
+             | None ->
+                 Lwt.return
+                   (Dream.response
+                      ~headers:[ ("Content-Type", "text/json") ]
+                      "")
+             | Some sub ->
+                 let job =
+                   { Protocol.task = { scene = !state.current }; sub }
+                 in
+                 let () =
+                   Lwt.dont_wait
+                     (fun () ->
+                       Lwt_list.iter_p
+                         (fun ws ->
+                           send ws
+                           @@ Protocol.Update
+                                {
+                                  username;
+                                  color;
+                                  position = sub;
+                                  status = Start;
+                                })
+                         !clients)
+                     (fun _ -> ())
+                 in
+                 Lwt.return
+                   (Dream.response
+                      ~headers:[ ("Content-Type", "text/json") ]
+                      (Yojson.Safe.to_string @@ Protocol.job_to_yojson job)));
          Dream.post "/respond" (fun query ->
              let username, color = get_user query in
              let* body = Dream.body query in
@@ -122,7 +172,7 @@ let () =
                Result.get_ok
                @@ Protocol.response_of_yojson (Yojson.Safe.from_string body)
              in
-             let () =
+             if mark_done rect then (
                Lwt.dont_wait
                  (fun () ->
                    Lwt_list.iter_p
@@ -136,8 +186,14 @@ let () =
                               status = Resolved result;
                             })
                      !clients)
-                 (fun _ -> ())
-             in
+                 (fun _ -> ());
+               if !state.remaining <= 0 then (
+                 Queue.clear !state.todos;
+                 Lwt.dont_wait
+                   (fun () ->
+                     let+ () = Lwt_unix.sleep 3.0 in
+                     state := make_state ())
+                   (fun _ -> ())));
              Lwt.return
              @@ Dream.response ~headers:[ ("Content-Type", "text/json") ] "");
          Dream.get "/style.css" (fun _ ->
