@@ -4,7 +4,7 @@ module H = Tyxml_html
 let cell_size = 128
 let width = 1408
 let height = 1408
-
+let ratio = float_of_int width /. float_of_int height
 (* *)
 
 let () = Random.self_init ()
@@ -28,6 +28,8 @@ let clients = ref []
 
 type state = {
   current : Ray_tracer.Scene.scene;
+  camera : Ray_tracer.Camera.camera;
+  viewport : Ray_tracer.Camera.viewport;
   todos : Protocol.sub Queue.t;
   mutable remaining : int;
   is_done : bool array array;
@@ -49,9 +51,17 @@ let make_state () =
   in
   knuth_shuffle arr;
   let todos = Queue.create () in
+  let camera =
+    Ray_tracer.Camera.create ~image_width:width ~ratio
+      ~camera_center:(Ray_tracer.Pos.create 0. 0. 0.)
+      ~focal_length:1. ()
+  in
+  let viewport = Ray_tracer.Camera.create_viewport ~viewport_height:2. camera in
   Array.iter (fun x -> Queue.add x todos) arr;
   {
     current = Scenes.random_scene ();
+    camera;
+    viewport;
     todos;
     remaining = width * height;
     is_done = Array.make_matrix width height false;
@@ -143,7 +153,16 @@ let () =
                       "")
              | Some sub ->
                  let job =
-                   { Protocol.task = { scene = !state.current }; sub }
+                   {
+                     Protocol.task =
+                       {
+                         scene = !state.current;
+                         camera_center =
+                           Ray_tracer.Camera.camera_center !state.camera;
+                         viewport = !state.viewport;
+                       };
+                     sub;
+                   }
                  in
                  let () =
                    Lwt.dont_wait

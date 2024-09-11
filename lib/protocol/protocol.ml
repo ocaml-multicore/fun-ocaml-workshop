@@ -1,6 +1,10 @@
 type status = Start | Resolved of string [@@deriving yojson]
 
-type task = { scene : Ray_tracer.Scene.scene (* TODO: camera parameters *) }
+type task = {
+  scene : Ray_tracer.Scene.scene;
+  camera_center : Ray_tracer.Pos.t;
+  viewport : Ray_tracer.Camera.viewport;
+}
 [@@deriving yojson]
 
 type sub = { x : int; y : int; w : int; h : int } [@@deriving yojson]

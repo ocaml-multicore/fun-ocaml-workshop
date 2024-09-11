@@ -73,3 +73,4 @@ val create_subviewport :
   viewport_height:int ->
   viewport ->
   viewport
+(** [create_subviewport ~upper_left ~width ~height viewport] create a new viewport that is subpart of [viewport] with a size of ([width], [height]). [upper_left] is a pixel position. *)
