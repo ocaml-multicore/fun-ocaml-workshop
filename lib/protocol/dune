@@ -1,6 +1,6 @@
 (library
  (public_name funocaml_protocol)
  (name protocol)
- (libraries yojson)
+ (libraries yojson ray_tracer)
  (preprocess
   (pps ppx_deriving_yojson)))

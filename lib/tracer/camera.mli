@@ -4,7 +4,7 @@ focal length. *)
 
 (** {1 Camera} *)
 
-type camera
+type camera [@@deriving yojson]
 (** Type represented the camera. *)
 
 val create :
@@ -49,6 +49,7 @@ type viewport = {
   viewport_width : float;
   viewport_height : float;
 }
+[@@deriving yojson]
 (** Virtual viewport throught which the ray pass. It is located on the [uz] axis
 of the camera, at a distance of [-focal_length] of the [camera_center]. Its orientation 
 is aligned with [ux] and [uy]. It is defined by: 

@@ -26,9 +26,12 @@ let knuth_shuffle a =
 
 let clients = ref []
 
-type state = Protocol.sub Queue.t
+type state = {
+  mutable current : Ray_tracer.Scene.scene;
+  todos : Protocol.sub Queue.t;
+}
 
-let state : state = Queue.create ()
+let state = { current = Scenes.random_scene (); todos = Queue.create () }
 
 let make_state () =
   let () =
@@ -36,6 +39,7 @@ let make_state () =
       (fun () -> Lwt_list.iter_p (fun ws -> send ws Protocol.Fresh) !clients)
       (fun _ -> ())
   in
+  state.current <- Scenes.random_scene ();
   let arr =
     Array.concat
       (List.init (width / cell_size) (fun x ->
@@ -45,10 +49,10 @@ let make_state () =
                { Protocol.x; y; w = cell_size; h = cell_size })))
   in
   knuth_shuffle arr;
-  Array.iter (fun x -> Queue.add x state) arr
+  Array.iter (fun x -> Queue.add x state.todos) arr
 
 let rec pop () =
-  match Queue.pop state with
+  match Queue.pop state.todos with
   | exception Queue.Empty ->
       make_state ();
       pop ()
@@ -94,7 +98,8 @@ let () =
                          ])));
          Dream.get "/request" (fun query ->
              let username, color = get_user query in
-             let sub_image = pop () in
+             let sub = pop () in
+             let job = { Protocol.task = { scene = state.current }; sub } in
              let () =
                Lwt.dont_wait
                  (fun () ->
@@ -102,23 +107,18 @@ let () =
                      (fun ws ->
                        send ws
                        @@ Protocol.Update
-                            {
-                              username;
-                              color;
-                              position = sub_image;
-                              status = Start;
-                            })
+                            { username; color; position = sub; status = Start })
                      !clients)
                  (fun _ -> ())
              in
              Lwt.return
                (Dream.response
                   ~headers:[ ("Content-Type", "text/json") ]
-                  (Yojson.Safe.to_string @@ Protocol.sub_to_yojson sub_image)));
+                  (Yojson.Safe.to_string @@ Protocol.job_to_yojson job)));
          Dream.post "/respond" (fun query ->
              let username, color = get_user query in
              let* body = Dream.body query in
-             let { Protocol.sub; result } =
+             let { Protocol.rect; result } =
                Result.get_ok
                @@ Protocol.response_of_yojson (Yojson.Safe.from_string body)
              in
@@ -132,7 +132,7 @@ let () =
                             {
                               username;
                               color;
-                              position = sub;
+                              position = rect;
                               status = Resolved result;
                             })
                      !clients)

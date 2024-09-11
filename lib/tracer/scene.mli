@@ -11,11 +11,12 @@ Note : Planes are infinite so they are not very useful for now :).
 type form =
   | Sphere of { centre : Pos.t; radius : float }
   | Plane of { normal : Vect.t; point : Pos.t }
+[@@deriving yojson]
 
-type obj = { form : form; material : Material.t }
+type obj = { form : form; material : Material.t } [@@deriving yojson]
 (** An object is described by its form and its material. *)
 
-type scene = obj list
+type scene = obj list [@@deriving yojson]
 
 (** {1 Constructors}*)
 

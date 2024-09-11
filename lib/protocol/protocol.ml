@@ -1,5 +1,10 @@
 type status = Start | Resolved of string [@@deriving yojson]
+
+type task = { scene : Ray_tracer.Scene.scene (* TODO: camera parameters *) }
+[@@deriving yojson]
+
 type sub = { x : int; y : int; w : int; h : int } [@@deriving yojson]
+type job = { task : task; sub : sub } [@@deriving yojson]
 
 type t =
   | Fresh
@@ -19,4 +24,4 @@ let to_string msg =
   let msg = to_yojson msg in
   Yojson.Safe.to_string msg
 
-type response = { sub : sub; result : string } [@@deriving yojson]
+type response = { rect : sub; result : string } [@@deriving yojson]

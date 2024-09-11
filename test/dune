@@ -4,6 +4,11 @@
  (libraries eio_main actor_eio imagelib ray_tracer))
 
 (executable
+ (name test_eio_queue)
+ (modules test_eio_queue)
+ (libraries eio_main actor_eio imagelib ray_tracer saturn))
+
+(executable
  (name test_picos_io_cohttp)
  (modules test_picos_io_cohttp)
  (libraries

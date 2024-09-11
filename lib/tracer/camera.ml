@@ -7,6 +7,7 @@ type camera = {
   image_height : int;
   focal_length : float;
 }
+[@@deriving yojson]
 
 let camera_center camera = camera.camera_center
 let image_width camera = camera.image_width
@@ -31,6 +32,7 @@ type viewport = {
   viewport_width : float;
   viewport_height : float;
 }
+[@@deriving yojson]
 
 let create_viewport ?(viewport_height = 2.) camera =
   let pixel_size = viewport_height /. float_of_int camera.image_height in
