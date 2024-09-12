@@ -11,7 +11,7 @@
 
 (maintainers "Vesa Karvonen" "Carine Morel" "Arthur Wendling")
 
-(license LICENSE)
+(license MIT)
 
 (package
  (name ray_tracer)
@@ -55,7 +55,11 @@
   (funocaml_actor_shared
    (= :version))
   (cohttp-eio
-   (>= 6.0.0~beta2))))
+   (>= 6.0.0~beta2))
+   (saturn
+    (and (>= 0.5.0) :with-test))
+   (eio_main
+    (and (>= 1.0.0) :with-test))))
 
 (package
  (name funocaml_actor_picos_io_cohttp)
@@ -65,7 +69,9 @@
   (funocaml_actor_shared
    (= :version))
   (picos_io_cohttp
-   (>= 0.5.0))))
+   (>= 0.5.0))
+   (picos_mux
+    (and (>= 0.5.0) :with-test))))
 
 (package
  (name funocaml_server)
@@ -76,6 +82,14 @@
   (dream
    (>= 1.0.0~alpha6))
   (js_of_ocaml
-   (>= 5.8.2))))
+   (>= 5.8.2))
+   (brr
+    (>= 0.0.6))
+    (color 
+    (>= 0.2.0))
+    (ppx_blob
+    (>= 0.8.0))
+    (tyxml
+    (>= 4.6.0))))
 
 ; See the complete stanza docs at https://dune.readthedocs.io/en/stable/dune-files.html#dune-project

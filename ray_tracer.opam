@@ -5,7 +5,7 @@ description:
   "Inspired by the Ray Tracing In One Weekend tutorial (https://raytracing.github.io/books/RayTracingInOneWeekend.html)."
 maintainer: ["Vesa Karvonen" "Carine Morel" "Arthur Wendling"]
 authors: ["Vesa Karvonen" "Carine Morel" "Arthur Wendling"]
-license: "LICENSE"
+license: "MIT"
 homepage: "https://github.com/ocaml-multicore/fun-ocaml-workshop"
 bug-reports: "https://github.com/ocaml-multicore/fun-ocaml-workshop/issues"
 depends: [

@@ -4,13 +4,14 @@ synopsis:
   "FunOCaml Multicore Workshop: actor library for Picos through IO Cohttp"
 maintainer: ["Vesa Karvonen" "Carine Morel" "Arthur Wendling"]
 authors: ["Vesa Karvonen" "Carine Morel" "Arthur Wendling"]
-license: "LICENSE"
+license: "MIT"
 homepage: "https://github.com/ocaml-multicore/fun-ocaml-workshop"
 bug-reports: "https://github.com/ocaml-multicore/fun-ocaml-workshop/issues"
 depends: [
   "dune" {>= "3.15"}
   "funocaml_actor_shared" {= version}
   "picos_io_cohttp" {>= "0.5.0"}
+  "picos_mux" {>= "0.5.0" & with-test}
   "odoc" {with-doc}
 ]
 build: [
