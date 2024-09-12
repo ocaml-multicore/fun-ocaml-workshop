@@ -114,8 +114,8 @@ let sky_color ray =
   Color.rgb r g b
 
 let compute_hit_point (scene : Scene.scene) ray =
-  let rec loop ray closest scene =
-    match scene with
+  let rec loop ray closest (objs : Scene.obj list) =
+    match objs with
     | [] -> closest
     | obj :: tl -> begin
         match intersect ~tmin:0.0001 ray obj with
@@ -131,7 +131,11 @@ let compute_hit_point (scene : Scene.scene) ray =
                 else loop ray closest tl)
       end
   in
-  loop ray None scene
+  List.fold_left
+    (fun closest obj_t ->
+      let objs = Scene.to_obj obj_t in
+      loop ray closest objs)
+    None scene
 
 let ray_to_color_ max_depth scene ray =
   let rec loop ray depth =

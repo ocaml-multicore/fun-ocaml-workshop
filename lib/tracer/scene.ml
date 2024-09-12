@@ -9,16 +9,17 @@ type transfo =
   | Rotation of { center : Pos.t; matrix : float array array }
 [@@deriving yojson]
 
-type obj = { form : form; material : Material.t }
+type obj = { form : form; material : Material.t } [@@deriving yojson]
 
-type obj_t = Objet of obj | Transfo of { transfo : transfo; obj : obj_t }
+type obj_t =
+  | Objet of obj
+  | Transfo of { transfo : transfo; obj : obj_t }
+  | Compo of obj_t list
 [@@deriving yojson]
 
 type scene = obj_t list [@@deriving yojson]
 
-let to_obj obj_t =
-  match obj_t with Objet obj -> obj | Transfo { obj; _ } -> failwith "todo"
-
+let objs_to_scene objs = List.map (fun obj -> Objet obj) objs
 let sphere centre radius = Sphere { centre; radius = Float.abs radius }
 let plane normal point = Plane { normal = Vect.unit_vector normal; point }
 let to_string scene = scene_to_yojson scene |> Yojson.Safe.to_string
@@ -69,8 +70,13 @@ let translate vect form =
   | Plane plane -> Plane { plane with point = Pos.offset vect plane.point }
 
 let scale k form =
+  let origin = Pos.create 0. 0. 0. in
   match form with
-  | Sphere sphere -> Sphere { sphere with radius = k *. sphere.radius }
+  | Sphere sphere ->
+      let centre =
+        Pos.offset (Pos.vector sphere.centre origin |> Vect.scale k) origin
+      in
+      Sphere { radius = k *. sphere.radius; centre }
   | Plane _ -> form
 
 let rotation rot_center rot_matrix form =
@@ -109,3 +115,22 @@ let transform transfo obj =
     | Rotation { center; matrix } -> rotation center matrix obj.form
   in
   { obj with form = transform_obj }
+
+let to_obj ?(depth = 3) obj_t =
+  let rec loop d = function
+    | Objet obj -> obj :: []
+    | Transfo { transfo; obj } -> List.map (transform transfo) (loop d obj)
+    | Compo objs ->
+        if d = 0 then [] else List.map (loop (d - 1)) objs |> List.flatten
+  in
+  loop depth obj_t
+
+let to_obj_t obj = Objet obj
+
+let rec with_transfo ?(transfo = []) obj_t =
+  match transfo with
+  | [] -> obj_t
+  | transfo :: rest ->
+      Transfo { transfo; obj = with_transfo ~transfo:rest obj_t }
+
+let of_list objs = Compo objs

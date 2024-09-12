@@ -84,20 +84,50 @@ module Make (Client : HTTP_CLIENT) = struct
 
   open Ray_tracer
 
+  let example_scene =
+    let open Scene in
+    let objs =
+      [
+        {
+          form = sphere (Pos.create 0. 0. (-1.)) 0.5;
+          material = Material.create_lambertian (Color.rgb 0.5 0.5 0.5);
+        };
+        {
+          form = sphere (Pos.create 0. 0.5 (-1.)) 0.3;
+          material = Material.create_lambertian (Color.rgb 0.5 0. 0.);
+        };
+      ]
+      |> List.map to_obj_t
+    in
+    let scale1 = build_scale 0.5 in
+    let transla1 = build_translation (Vect.create 0.5 0. 0.) in
+    let scale2 = build_scale 0.25 in
+    let transla2 = build_translation (Vect.create (-0.5) 0. 0.) in
+    let rec scene =
+      [
+        with_transfo ~transfo:[ scale1; transla1 ] (of_list objs);
+        Transfo
+          {
+            transfo = scale2;
+            obj = Transfo { transfo = transla2; obj = Compo scene };
+          };
+      ]
+    in
+    scene
+
   let render job =
-    let {
-      Protocol.task = { scene; camera_center; viewport };
-      sub = { x; y; w; h };
-    } =
+    let { Protocol.task = { camera_center; viewport; _ }; sub = { x; y; w; h } }
+        =
       job
     in
+
     let subviewport =
       Camera.create_subviewport ~upper_left:(x, y) ~viewport_width:w
         ~viewport_height:h viewport
     in
     let arr =
-      Ray.rays_to_colors ~progress_bar:true ~nsamples:50 ~max_depth:20 scene
-        camera_center subviewport
+      Ray.rays_to_colors ~progress_bar:true ~nsamples:10 ~max_depth:10
+        example_scene camera_center subviewport
     in
     let img = Image.create_rgb w h in
     for x = 0 to w - 1 do

@@ -29,6 +29,7 @@ let example5 ?(progress_bar = false) ~image_width ~ratio () =
         material = Material.create_lambertian (Color.rgb 0.4 0.2 0.);
       };
     ]
+    |> objs_to_scene
   in
   Ray.rays_to_colors ~progress_bar ~nsamples:50 ~max_depth:20 scene
     (Camera.camera_center camera)
@@ -57,6 +58,7 @@ let example6 ?(progress_bar = false) ~image_width ~ratio () =
         material = Material.create_metal (Color.rgb 0.9 0.9 0.9) 0.1;
       };
     ]
+    |> objs_to_scene
   in
   Ray.rays_to_colors ~progress_bar ~nsamples:50 ~max_depth:20 scene
     (Camera.camera_center camera)

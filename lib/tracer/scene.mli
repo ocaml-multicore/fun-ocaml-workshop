@@ -13,10 +13,33 @@ type form =
   | Plane of { normal : Vect.t; point : Pos.t }
 [@@deriving yojson]
 
+type transfo
+
 type obj = { form : form; material : Material.t } [@@deriving yojson]
 (** An object is described by its form and its material. *)
 
-type scene = obj list [@@deriving yojson]
+type obj_t =
+  | Objet of obj
+  | Transfo of { transfo : transfo; obj : obj_t }
+  | Compo of obj_t list
+[@@deriving yojson]
+
+type scene = obj_t list [@@deriving yojson]
+
+val to_obj : ?depth:int -> obj_t -> obj list
+(** [to_obj obj_t] *)
+
+val to_obj_t : obj -> obj_t
+(** [to_obj_t objs] *)
+
+val with_transfo : ?transfo:transfo list -> obj_t -> obj_t
+(** [with_transfo ~transfo obj] *)
+
+val of_list : obj_t list -> obj_t
+(** [of_list objs] *)
+
+val objs_to_scene : obj list -> scene
+(** [objs_to_scene objs] *)
 
 (** {1 Constructors}*)
 
@@ -31,8 +54,6 @@ val to_string : scene -> string
 
 val of_string : string -> scene
 (** [of_string yojson_scene] *)
-
-type transfo
 
 val build_translation : Vect.t -> transfo
 (** [build_translation vect] *)

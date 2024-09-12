@@ -16,6 +16,7 @@ let example5 () =
       material = Material.create_lambertian (Color.rgb r g b);
     };
   ]
+  |> objs_to_scene
 
 let example6 () =
   let x = Random.float 1.0 in
@@ -42,6 +43,40 @@ let example6 () =
       material = Material.create_metal (Color.rgb 0.8 0.9 0.8) 0.1;
     };
   ]
+  |> objs_to_scene
+
+let _example_transfo () =
+  let open Scene in
+  let objs =
+    [
+      {
+        form = sphere (Pos.create 0. 0. (-1.)) 0.5;
+        material = Material.create_lambertian (Color.rgb 0.5 0.5 0.5);
+      };
+      {
+        form = sphere (Pos.create 0. 0.5 (-1.)) 0.3;
+        material = Material.create_lambertian (Color.rgb 0.5 0. 0.);
+      };
+    ]
+    |> List.map to_obj_t
+  in
+  let scale1 = build_scale 0.5 in
+  let transla1 = build_translation (Vect.create 0.5 0. 0.) in
+  let scale2 = build_scale 0.25 in
+  let transla2 = build_translation (Vect.create (-0.5) 0. 0.) in
+  let rec scene =
+    [
+      with_transfo ~transfo:[ scale1; transla1 ] (of_list objs);
+      Transfo
+        {
+          transfo = scale2;
+          obj = Transfo { transfo = transla2; obj = Compo scene };
+        };
+    ]
+  in
+  scene
 
 let scenes = [| example5; example6 |]
 let random_scene () = scenes.(Random.int (Array.length scenes)) ()
+
+(* let random_scene = example_transfo *)
