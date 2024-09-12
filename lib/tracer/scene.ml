@@ -3,8 +3,21 @@ type form =
   | Plane of { normal : Vect.t; point : Pos.t }
 [@@deriving yojson]
 
-type obj = { form : form; material : Material.t } [@@deriving yojson]
-type scene = obj list [@@deriving yojson]
+type transfo =
+  | Translate of Vect.t
+  | Scale of float
+  | Rotation of { center : Pos.t; matrix : float array array }
+[@@deriving yojson]
+
+type obj = { form : form; material : Material.t }
+
+type obj_t = Objet of obj | Transfo of { transfo : transfo; obj : obj_t }
+[@@deriving yojson]
+
+type scene = obj_t list [@@deriving yojson]
+
+let to_obj obj_t =
+  match obj_t with Objet obj -> obj | Transfo { obj; _ } -> failwith "todo"
 
 let sphere centre radius = Sphere { centre; radius = Float.abs radius }
 let plane normal point = Plane { normal = Vect.unit_vector normal; point }
@@ -12,11 +25,6 @@ let to_string scene = scene_to_yojson scene |> Yojson.Safe.to_string
 
 let of_string yojson_scene : scene =
   scene_of_yojson @@ Yojson.Safe.from_string yojson_scene |> Result.get_ok
-
-type transfo =
-  | Translate of Vect.t
-  | Scale of float
-  | Rotation of { center : Pos.t; matrix : float array array }
 
 let build_translation vect = Translate vect
 let build_scale k = Scale k
