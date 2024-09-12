@@ -31,3 +31,20 @@ val to_string : scene -> string
 
 val of_string : string -> scene
 (** [of_string yojson_scene] *)
+
+type transfo
+
+val build_translation : Vect.t -> transfo
+(** [build_translation vect] *)
+
+val build_scale : float -> transfo
+(** [build_scale k] *)
+
+val build_rotation : Pos.t -> float array array -> transfo
+(** [build_rotation center matrix] *)
+
+val build_rotation_alt : Pos.t -> Vect.t -> float -> transfo
+(** [build_rotation_alt center vect angle] *)
+
+val transform : transfo -> obj -> obj
+(** [transform transfo form] *)
