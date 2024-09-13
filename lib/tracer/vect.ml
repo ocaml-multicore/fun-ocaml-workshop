@@ -73,3 +73,7 @@ let random ?(min = -1.) ?(max = 1.) () =
   }
 
 let random_unit ?(min = -1.) ?(max = 1.) () = random ~min ~max () |> unit_vector
+
+let rec random_in_unit_disk () =
+  let p = create (Random.float 2. -. 1.) (Random.float 2. -. 1.) 0. in
+  if norm2 p < 1. then p else random_in_unit_disk ()

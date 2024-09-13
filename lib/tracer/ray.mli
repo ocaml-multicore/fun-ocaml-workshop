@@ -71,17 +71,12 @@ val ray_to_color :
 
 val rays_to_colors :
   ?progress_bar:bool ->
-  ?nsamples:int ->
-  ?max_depth:int ->
   Scene.scene ->
-  Pos.t ->
+  Camera.camera ->
   Camera.viewport ->
   Color.t array array
-(** [rays_to_colors ?progress_bar scene camera_center viewport] computes the colors of each ray.
-{ul 
-{- [nsamples] defines the number of sampled rays per pixel. By default, it is 1 
-(no sampling). }
-{- [max_depth] defines the maximum number of bounces of a ray. }}*)
+(** [rays_to_colors ?progress_bar scene camera viewport] computes the colors of each ray.
+*)
 
 val sky_color : ray -> Color.t
 (** [sky_color ray] returns the color of the sky (no hitten objects) for the 

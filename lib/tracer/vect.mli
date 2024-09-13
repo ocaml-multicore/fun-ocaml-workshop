@@ -52,3 +52,6 @@ val random : ?min:float -> ?max:float -> unit -> t
 
 val random_unit : ?min:float -> ?max:float -> unit -> t
 (** [random_unit ()] generates a random unit vector. *)
+
+val random_in_unit_disk : unit -> t
+(** [random_in_unit_disk ()] generates a random vector in the unit disk. *)

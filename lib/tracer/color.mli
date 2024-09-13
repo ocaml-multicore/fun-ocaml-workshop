@@ -31,3 +31,6 @@ val linear_to_gamma : t -> t
 val mul : t -> t -> t
 (** [mul c1 c2] returns the element-wise multiplication of two colors [c1] and 
 [c2]. *)
+
+val random : ?min:float -> ?max:float -> unit -> t
+(** [random ()] returns a random color. *)

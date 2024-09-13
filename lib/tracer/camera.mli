@@ -4,13 +4,32 @@ focal length. *)
 
 (** {1 Camera} *)
 
-type camera [@@deriving yojson]
+type camera = {
+  center : Pos.t;
+  ux : Vect.t;
+  uy : Vect.t;
+  uz : Vect.t;
+  image_width : int;
+  image_height : int;
+  vfov : float;
+  defocus_disk_u : Vect.t;
+  defocus_disk_v : Vect.t;
+  focus_dist : float;
+  defocus_angle : float;
+  nsamples : int;
+  max_depth : int;
+}
+[@@deriving yojson]
 (** Type represented the camera. *)
 
 val create :
+  ?nsamples:int ->
+  ?max_depth:int ->
   ?ratio:float ->
   ?image_width:int ->
   ?vfov:float ->
+  ?defocus_angle:float ->
+  ?focus_dist:float ->
   vup:Vect.t ->
   lookat:Pos.t ->
   lookfrom:Pos.t ->
@@ -23,7 +42,10 @@ val create :
     {- [vup] is the up vector of the camera}
     {- the ratio of the image [ratio]}
     {- the width of the image [image_width]}
-    {- the vertical view angle [vfov] }}  *)
+    {- the vertical view angle [vfov] }
+    {- [nsamples] defines the number of sampled rays per pixel. By default, it is 1 
+(no sampling). }
+    {- [max_depth] defines the maximum number of bounces of a ray. }}  *)
 
 val default : camera
 (** Default camera: 
@@ -32,12 +54,6 @@ val default : camera
     {- [basis] is (1, 0, 0) and (0, 1, 0) and (0, 0, 1)}
     {- [ratio] is 16/9 with width 400}
     {- [focal_length] is 1.}}  *)
-
-(** {2 Accessors} *)
-
-val camera_center : camera -> Pos.t
-val image_width : camera -> int
-val image_height : camera -> int
 
 (** {1 Viewport} *)
 

@@ -2,7 +2,7 @@ type status = Start | Resolved of string [@@deriving yojson]
 
 type task = {
   scene : Ray_tracer.Scene.scene;
-  camera_center : Ray_tracer.Pos.t;
+  camera : Ray_tracer.Camera.camera;
   viewport : Ray_tracer.Camera.viewport;
 }
 [@@deriving yojson]

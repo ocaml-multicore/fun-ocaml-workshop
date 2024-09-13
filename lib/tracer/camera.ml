@@ -1,37 +1,52 @@
 type camera = {
-  camera_center : Pos.t;
+  center : Pos.t;
   ux : Vect.t;
   uy : Vect.t;
   uz : Vect.t;
   image_width : int;
   image_height : int;
-  focal_length : float;
   vfov : float;
+  defocus_disk_u : Vect.t;
+  defocus_disk_v : Vect.t;
+  focus_dist : float;
+  defocus_angle : float;
+  nsamples : int;
+  max_depth : int;
 }
 [@@deriving yojson]
 
-let camera_center camera = camera.camera_center
-let image_width camera = camera.image_width
-let image_height camera = camera.image_height
-
-let create ?(ratio = 16. /. 9.) ?(image_width = 1600) ?(vfov = 90.) ~vup ~lookat
-    ~lookfrom () =
+let create ?(nsamples = 20) ?(max_depth = 20) ?(ratio = 16. /. 9.)
+    ?(image_width = 1600) ?(vfov = 90.) ?(defocus_angle = 0.) ?focus_dist ~vup
+    ~lookat ~lookfrom () =
+  let focus_dist =
+    Option.fold ~none:(Pos.dist lookfrom lookat) ~some:Float.abs focus_dist
+  in
   let image_height =
     int_of_float (float_of_int image_width /. ratio) |> max 1
   in
-  let focal_length = Pos.dist lookat lookfrom in
   let uz = Vect.unit_vector (Pos.vector lookat lookfrom) in
   let ux = Vect.unit_vector (Vect.cross vup uz) in
   let uy = Vect.cross uz ux in
+  let defocus_radius =
+    focus_dist *. Float.tan (Utils.degrees_to_radians defocus_angle /. 2.)
+  in
+
+  let defocus_disk_u = Vect.scale defocus_radius ux in
+  let defocus_disk_v = Vect.scale defocus_radius uy in
   {
     ux;
     uy;
     uz;
-    camera_center = lookfrom;
+    center = lookfrom;
     image_width;
     image_height;
-    focal_length;
     vfov;
+    defocus_disk_u;
+    defocus_disk_v;
+    focus_dist;
+    defocus_angle;
+    max_depth;
+    nsamples;
   }
 
 let default =
@@ -50,7 +65,7 @@ type viewport = {
 
 let create_viewport camera =
   let theta = Utils.degrees_to_radians camera.vfov in
-  let viewport_height = 2.0 *. Float.tan (theta /. 2.) *. camera.focal_length in
+  let viewport_height = 2.0 *. Float.tan (theta /. 2.) *. camera.focus_dist in
   let pixel_size = viewport_height /. float_of_int camera.image_height in
   let viewport_width = pixel_size *. float_of_int camera.image_width in
   let viewport_u = Vect.scale viewport_width camera.ux in
@@ -62,10 +77,10 @@ let create_viewport camera =
     Vect.scale (1. /. float_of_int camera.image_height) viewport_v
   in
   let ul_corner =
-    camera.camera_center
-    |> Pos.offset (Vect.scale (-.viewport_width /. 2.) camera.ux)
-    |> Pos.offset (Vect.scale (viewport_height /. 2.) camera.uy)
-    |> Pos.offset (Vect.scale (-.camera.focal_length) camera.uz)
+    camera.center
+    |> Pos.offset (Vect.scale (-0.5) viewport_u)
+    |> Pos.offset (Vect.scale (-0.5) viewport_v)
+    |> Pos.offset (Vect.scale (-.camera.focus_dist) camera.uz)
   in
   let ul_pixel =
     Pos.offset (Vect.scale (pixel_size /. 2.) camera.ux) ul_corner

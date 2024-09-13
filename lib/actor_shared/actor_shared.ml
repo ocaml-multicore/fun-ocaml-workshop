@@ -85,20 +85,14 @@ module Make (Client : HTTP_CLIENT) = struct
   open Ray_tracer
 
   let render job =
-    let {
-      Protocol.task = { scene; camera_center; viewport };
-      sub = { x; y; w; h };
-    } =
+    let { Protocol.task = { scene; camera; viewport }; sub = { x; y; w; h } } =
       job
     in
     let subviewport =
       Camera.create_subviewport ~upper_left:(x, y) ~viewport_width:w
         ~viewport_height:h viewport
     in
-    let arr =
-      Ray.rays_to_colors ~progress_bar:true ~nsamples:50 ~max_depth:20 scene
-        camera_center subviewport
-    in
+    let arr = Ray.rays_to_colors ~progress_bar:true scene camera subviewport in
     let img = Image.create_rgb w h in
     for x = 0 to w - 1 do
       for y = 0 to h - 1 do

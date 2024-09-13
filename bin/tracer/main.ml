@@ -9,6 +9,7 @@ let example ~number =
   | 1 -> Example.example5 ~progress_bar:true ()
   | 2 -> Example.example6 ~progress_bar:true ()
   | 3 -> Example.example7 ~progress_bar:true ~image_width ~ratio ()
+  | 4 -> Example.final_scene ~progress_bar:true ~image_width ~ratio ()
   | _ -> failwith "Bad example number"
 
 let main number =
@@ -19,7 +20,7 @@ let main number =
 
 (* Command line parsing *)
 let usage_msg = "dune exec ./main.exe -- -number [example_number]"
-let max_number = ref 3
+let max_number = ref 4
 let example_number = max_number
 let speclist = [ ("-number", Arg.Set_int example_number, "Example number") ]
 let anon_fun _ = ()

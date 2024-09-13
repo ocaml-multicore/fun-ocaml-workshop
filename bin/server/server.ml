@@ -52,7 +52,8 @@ let make_state () =
   knuth_shuffle arr;
   let todos = Queue.create () in
   let camera =
-    Ray_tracer.Camera.create ~image_width:width ~ratio
+    Ray_tracer.Camera.create ~image_width:width ~ratio ~max_depth:50
+      ~nsamples:20
       ~lookfrom:(Ray_tracer.Pos.create 0. 0. 0.)
       ~lookat:(Ray_tracer.Pos.create 0. 0. (-1.))
       ~vup:(Ray_tracer.Vect.create 0. 1. 0.)
@@ -159,8 +160,7 @@ let () =
                      Protocol.task =
                        {
                          scene = !state.current;
-                         camera_center =
-                           Ray_tracer.Camera.camera_center !state.camera;
+                         camera = !state.camera;
                          viewport = !state.viewport;
                        };
                      sub;

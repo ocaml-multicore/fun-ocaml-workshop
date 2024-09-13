@@ -32,3 +32,8 @@ let linear_to_gamma rgb =
 
 let mul rgb1 rgb2 =
   { r = rgb1.r *. rgb2.r; g = rgb1.g *. rgb2.g; b = rgb1.b *. rgb2.b }
+
+let random_float min max = Random.float (max -. min) +. min
+
+let random ?(min = 0.) ?(max = 1.) () =
+  rgb (random_float min max) (random_float min max) (random_float min max)

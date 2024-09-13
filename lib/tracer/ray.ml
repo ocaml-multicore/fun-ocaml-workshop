@@ -186,8 +186,22 @@ let[@inline] print_progress height jj =
   if jj mod 100 = 0 then
     Format.printf "\rScanlines remaining: %d @." (height - jj)
 
-let rays_to_colors ?(progress_bar = false) ?(nsamples = 1) ?(max_depth = 10)
-    (scene : Scene.scene) camera_center (viewport : Camera.viewport) =
+(* point3 defocus_disk_sample() const {
+       // Returns a random point in the camera defocus disk.
+       auto p = random_in_unit_disk();
+       return center + (p[0] * defocus_disk_u) + (p[1] * defocus_disk_v);
+   }
+*)
+let[@inline] defocus_disk_sample (camera : Camera.camera) =
+  let p = Vect.random_in_unit_disk () in
+  let x = Vect.scale p.xv camera.defocus_disk_u in
+  let y = Vect.scale p.yv camera.defocus_disk_v in
+  Pos.offset (Vect.add x y) camera.center
+
+let rays_to_colors ?(progress_bar = false) (scene : Scene.scene)
+    (camera : Camera.camera) (viewport : Camera.viewport) =
+  let max_depth = camera.max_depth in
+  let nsamples = camera.nsamples in
   let viewport_height = viewport.viewport_height in
   Array.init_matrix viewport.viewport_height viewport.viewport_width
     (fun jj ii ->
@@ -198,6 +212,11 @@ let rays_to_colors ?(progress_bar = false) ?(nsamples = 1) ?(max_depth = 10)
         |> Pos.offset (Vect.scale (float_of_int ii) viewport.pixel_delta_u)
         |> Pos.offset (Vect.scale (float_of_int jj) viewport.pixel_delta_v)
       in
-      let ray_direction = Pos.vector camera_center pixel_center in
-      let ray = create ray_direction camera_center in
+      let ray_origin =
+        if camera.defocus_angle <= 0. then camera.center
+        else defocus_disk_sample camera
+      in
+
+      let ray_direction = Pos.vector ray_origin pixel_center in
+      let ray = create ray_direction ray_origin in
       ray_to_color ~max_depth ~nsamples scene viewport ray)
