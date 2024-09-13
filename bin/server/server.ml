@@ -53,10 +53,12 @@ let make_state () =
   let todos = Queue.create () in
   let camera =
     Ray_tracer.Camera.create ~image_width:width ~ratio
-      ~camera_center:(Ray_tracer.Pos.create 0. 0. 0.)
-      ~focal_length:1. ()
+      ~lookfrom:(Ray_tracer.Pos.create 0. 0. 0.)
+      ~lookat:(Ray_tracer.Pos.create 0. 0. (-1.))
+      ~vup:(Ray_tracer.Vect.create 0. 1. 0.)
+      ()
   in
-  let viewport = Ray_tracer.Camera.create_viewport ~viewport_height:2. camera in
+  let viewport = Ray_tracer.Camera.create_viewport camera in
   Array.iter (fun x -> Queue.add x todos) arr;
   {
     current = Scenes.random_scene ();

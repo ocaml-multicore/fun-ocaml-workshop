@@ -19,3 +19,6 @@ val dist : t -> t -> float
 val change_basis : float array array -> t -> t
 (** [change_basis matrix p] transforms the point [p] from the standard basis 
 to a new basis defined by the given [matrix]. *)
+
+val origin : t
+(** The origin of the coordinate system. *)

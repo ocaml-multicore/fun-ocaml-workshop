@@ -8,23 +8,22 @@ type camera [@@deriving yojson]
 (** Type represented the camera. *)
 
 val create :
-  ?ux:Vect.t ->
-  ?uz:Vect.t ->
   ?ratio:float ->
   ?image_width:int ->
-  camera_center:Pos.t ->
-  focal_length:float ->
+  ?vfov:float ->
+  vup:Vect.t ->
+  lookat:Pos.t ->
+  lookfrom:Pos.t ->
   unit ->
   camera
 (** [create] builds a new camera (only a virtual one though) based on :
   {ul 
-    {- the position of the camera [camera_center]}
-    {- the direction it is looking at [uz]}
-    {- its orientation [ux]. [ux] and [uz] must be orthogonal and will be normed
-      by the function}
+    {- the position of the camera [lookfrom]}
+    {- the camera is looking at the point [lookat]}
+    {- [vup] is the up vector of the camera}
     {- the ratio of the image [ratio]}
     {- the width of the image [image_width]}
-    {- the focal length [focal_length]}}  *)
+    {- the vertical view angle [vfov] }}  *)
 
 val default : camera
 (** Default camera: 
@@ -62,10 +61,9 @@ opposite direction of [uy])}
 {- [viewport_width] and [viewport_height] : size of the viewport in the [ux] and 
 [uy]. Same ratio then the camera. }} *)
 
-val create_viewport : ?viewport_height:float -> camera -> viewport
+val create_viewport : camera -> viewport
 (** [create_viewport] create a new viewport. A viewport is the matrix of positions 
-such as the casted rays go from the camera position to each of this positions. 
-Default [viewport_height] value is 2.*)
+such as the casted rays go from the camera position to each of this positions. *)
 
 val create_subviewport :
   upper_left:int * int ->

@@ -6,8 +6,9 @@ let example ~number =
   let image_height = Float.of_int image_width /. ratio |> Float.to_int in
   open_graph (Printf.sprintf " %dx%d" image_width image_height);
   match number with
-  | 1 -> Example.example5 ~progress_bar:true ~image_width ~ratio ()
-  | 2 -> Example.example6 ~progress_bar:true ~image_width ~ratio ()
+  | 1 -> Example.example5 ~progress_bar:true ()
+  | 2 -> Example.example6 ~progress_bar:true ()
+  | 3 -> Example.example7 ~progress_bar:true ~image_width ~ratio ()
   | _ -> failwith "Bad example number"
 
 let main number =
@@ -18,7 +19,7 @@ let main number =
 
 (* Command line parsing *)
 let usage_msg = "dune exec ./main.exe -- -number [example_number]"
-let max_number = ref 2
+let max_number = ref 3
 let example_number = max_number
 let speclist = [ ("-number", Arg.Set_int example_number, "Example number") ]
 let anon_fun _ = ()

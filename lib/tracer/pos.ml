@@ -20,3 +20,5 @@ let change_basis m p =
   let y = (m.(1).(0) *. p.xp) +. (m.(1).(1) *. p.yp) +. (m.(1).(2) *. p.zp) in
   let z = (m.(2).(0) *. p.xp) +. (m.(2).(1) *. p.yp) +. (m.(2).(2) *. p.zp) in
   create x y z
+
+let origin = create 0. 0. 0.
