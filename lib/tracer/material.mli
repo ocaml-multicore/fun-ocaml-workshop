@@ -56,3 +56,9 @@ val metal_reflection : Vect.t -> Vect.t -> float -> Vect.t option
 
 val refract : Vect.t -> Vect.t -> float -> Vect.t
 (** [refract ray normal refraction_index] *)
+
+val reflect : Vect.t -> Vect.t -> Vect.t
+(** [reflect ray normal] *)
+
+val schlick_approximation : float -> float -> bool
+(** [schlick_approximation cos refraction_index] *)

@@ -24,10 +24,6 @@ referent ray but randomly offset from the center. *)
 val create : Vect.t -> Pos.t -> ray
 (** [create dir origin] *)
 
-val build_rays : Camera.camera -> Camera.viewport -> rays
-(** [build_rays camera viewport] generates a matrix of rays that start at the origin 
-of the [camera] and pass through each pixel of [viewport]. *)
-
 (** {2 Accessors} *)
 
 val dir : ray -> Vect.t

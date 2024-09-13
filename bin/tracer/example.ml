@@ -30,7 +30,7 @@ let example5 ?(progress_bar = false) ~image_width ~ratio () =
       };
     ]
   in
-  Ray.rays_to_colors ~progress_bar ~nsamples:50 ~max_depth:20 scene
+  Ray.rays_to_colors ~progress_bar ~nsamples:20 ~max_depth:20 scene
     (Camera.camera_center camera)
     viewport
   |> convert_colors
@@ -49,16 +49,22 @@ let example6 ?(progress_bar = false) ~image_width ~ratio () =
         material = Material.create_lambertian (Color.rgb 0.1 0.2 0.5);
       };
       {
+        (*  Air bubble *)
+        form = Scene.sphere (Pos.create (-1.) 0. (-1.)) 0.4;
+        material = Material.create_dielectric (Color.rgb 1. 1. 1.) (1. /. 1.5);
+      };
+      {
+        (* Glass *)
         form = Scene.sphere (Pos.create (-1.) 0. (-1.)) 0.5;
-        material = Material.create_metal (Color.rgb 0.8 0.6 0.2) 0.8;
+        material = Material.create_dielectric (Color.rgb 1. 1. 1.) 1.5;
       };
       {
         form = Scene.sphere (Pos.create 1. 0. (-1.)) 0.5;
-        material = Material.create_metal (Color.rgb 0.9 0.9 0.9) 0.1;
+        material = Material.create_metal (Color.rgb 0.8 0.6 0.2) 1.0;
       };
     ]
   in
-  Ray.rays_to_colors ~progress_bar ~nsamples:50 ~max_depth:20 scene
+  Ray.rays_to_colors ~progress_bar ~nsamples:20 ~max_depth:10 scene
     (Camera.camera_center camera)
     viewport
   |> convert_colors

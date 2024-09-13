@@ -13,6 +13,13 @@ let create_metal albedo fuzz = Metal { albedo; fuzz = max 0. (min 1. fuzz) }
 let create_dielectric albedo refraction_index =
   Dielectric { albedo; refraction_index }
 
+let[@inline] reflect incidence normal =
+  let aux =
+    normal |> Vect.scale (Vect.dot incidence normal) |> Vect.scale (-2.)
+  in
+  (* let aux = Vect.scale (-2.0 *. Vect.dot incidence normal) normal in *)
+  Vect.add incidence aux |> Vect.unit_vector
+
 let[@inline] lambertian_reflection normal =
   (* normal is supposed to be an unit_vector but because of float error it may
      not be anymore *)
@@ -22,11 +29,7 @@ let[@inline] lambertian_reflection normal =
   with _ -> normal
 
 let[@inline] metal_reflection incidence normal fuzz =
-  (* let incidence = Vect.unit_vector incidence in *)
-  let b =
-    normal |> Vect.scale (Vect.dot incidence normal) |> Vect.scale (-2.)
-  in
-  let reflected = Vect.add incidence b |> Vect.unit_vector in
+  let reflected = reflect incidence normal in
   if Vect.dot reflected normal > 0. then
     Some (Vect.add reflected (Vect.scale fuzz (Vect.random_unit ())))
   else None
@@ -40,3 +43,11 @@ let[@inline] refract incident normal rindex_ratio =
     Vect.scale (-.sqrt (1. -. Vect.norm2 r_out_perpendicular)) normal
   in
   Vect.add r_out_perpendicular r_out_parallel |> Vect.unit_vector
+
+let[@inline] reflectance cosine refraction_index =
+  let r0 = (1. -. refraction_index) /. (1. +. refraction_index) in
+  let r0 = r0 *. r0 in
+  r0 +. ((1. -. r0) *. ((1. -. cosine) ** 5.))
+
+let[@inline] schlick_approximation cosine refraction_index =
+  reflectance cosine refraction_index > Random.float 1.

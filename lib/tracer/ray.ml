@@ -19,23 +19,6 @@ let create dir origin =
           (origin.zp +. (f *. dir.zv)));
   }
 
-let build_rays (camera : Camera.camera) (viewport : Camera.viewport) : rays =
-  let camera_center = Camera.camera_center camera in
-  let rays : Vect.t array array =
-    Array.make_matrix (Camera.image_height camera) (Camera.image_width camera)
-    @@ Vect.create 0. 0. 0.
-  in
-  Utils.map2Dij
-    (fun ii jj _ ->
-      let pixel_center =
-        viewport.upper_left
-        |> Pos.offset (Vect.scale (float_of_int ii) viewport.pixel_delta_u)
-        |> Pos.offset (Vect.scale (float_of_int jj) viewport.pixel_delta_v)
-      in
-      let ray_direction = Pos.vector camera_center pixel_center in
-      create ray_direction camera_center)
-    rays
-
 (* An intersection point is defined by :
    - its position
    - the object that is hitten
@@ -95,17 +78,12 @@ let intersect ?(tmin = 0.) ?(tmax = Float.max_float) ray obj =
       if delta < 0. then None
       else
         let t1 = -.half_b -. sqrt delta in
-        if Float.abs t1 < tmin || t1 > tmax then None
+        if t1 < tmin || t1 > tmax then None
         else if t1 < 0. then
           let t2 = -.half_b +. sqrt delta in
           if t2 < tmin || t2 > tmax then None
           else Some (build_hit_point_sphere ray obj t2)
         else Some (build_hit_point_sphere ray obj t1)
-
-(* let test () =
-   let circle = Scene.sphere (Pos.create 0. 0. 0.) 1. in
-   let ray = Ray.create (Vect.create 0. (-1.) 0.) (Pos.create 0. 10. 0.) in
-   Ray.intersection ray circle *)
 
 let sky_color ray =
   let unit_dir = Vect.unit_vector (dir ray) in
@@ -161,12 +139,20 @@ let ray_to_color_ max_depth scene ray =
                 if hit_point.front_face then 1. /. refraction_index
                 else refraction_index
               in
-              let refracted_dir =
-                Material.refract ray.dir hit_point.normal ri
+              let cos_theta =
+                min (Vect.dot (Vect.neg ray.dir) hit_point.normal) 1.
               in
-              let refracted_ray = create refracted_dir hit_point.pos in
-              let refracted_color = loop refracted_ray (depth - 1) in
-              Color.mul albedo refracted_color
+              let sin_theta = sqrt (1. -. (cos_theta *. cos_theta)) in
+              let cannot_refract = ri *. sin_theta > 1. in
+
+              let new_dir =
+                if cannot_refract || Material.schlick_approximation cos_theta ri
+                then Material.reflect ray.dir hit_point.normal
+                else Material.refract ray.dir hit_point.normal ri
+              in
+              let new_ray = create new_dir hit_point.pos in
+              let new_color = loop new_ray (depth - 1) in
+              Color.mul albedo new_color
         end
   in
   loop ray max_depth
