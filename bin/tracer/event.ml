@@ -81,3 +81,8 @@ let loop image =
             let dir = char_to_dir status.key in
             move_view image w h dir
         | _ -> ())
+
+let loop_exit () =
+  loop_at_exit [ Key_pressed ] (fun status ->
+      if status.keypressed then
+        match status.key with 'q' -> raise Exit | _ -> ())

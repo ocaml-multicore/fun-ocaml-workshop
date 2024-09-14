@@ -96,12 +96,12 @@ let example7 ?(progress_bar = false) ~image_width ~ratio () =
   in
   Ray.rays_to_colors ~progress_bar scene camera viewport |> convert_colors
 
-let final_scene ?(progress_bar = false) ~image_width ~ratio () =
+let build_scene () =
   let open Scene in
-  let rec build_scene acc a b =
+  let rec loop acc a b =
     match (a, b) with
     | 0, 0 -> acc
-    | 0, _ -> build_scene acc 22 (b - 1)
+    | 0, _ -> loop acc 22 (b - 1)
     | _, _ ->
         let aa = a - 11 |> float_of_int in
         let bb = b - 11 |> float_of_int in
@@ -126,8 +126,8 @@ let final_scene ?(progress_bar = false) ~image_width ~ratio () =
           let sphere =
             { form = Scene.sphere center 0.2; material = sphere_material }
           in
-          build_scene (sphere :: acc) (a - 1) b
-        else build_scene acc (a - 1) b
+          loop (sphere :: acc) (a - 1) b
+        else loop acc (a - 1) b
   in
   let ground =
     {
@@ -153,11 +153,65 @@ let final_scene ?(progress_bar = false) ~image_width ~ratio () =
       material = Material.create_metal (Color.rgb 0.7 0.6 0.5) 0.0;
     }
   in
-  let scene = ground :: sphere1 :: sphere2 :: sphere3 :: build_scene [] 22 22 in
+  let scene = loop [] 22 22 in
+  ground :: sphere1 :: sphere2 :: sphere3 :: scene
+
+let final_scene ?(progress_bar = false) ~image_width ~ratio () =
+  let scene = build_scene () in
   let camera =
-    Camera.create ~defocus_angle:0.6 ~focus_dist:10. ~vfov:20. ~image_width
+    Camera.create ~defocus_angle:0.1 ~focus_dist:10. ~vfov:20. ~image_width
       ~ratio ~vup:(Vect.create 0. 1. 0.) ~lookat:(Pos.create 0. 0. 0.)
-      ~lookfrom:(Pos.create 13. 2. 3.) ~nsamples:200 ~max_depth:50 ()
+      ~lookfrom:(Pos.create 13. 2. 3.) ~nsamples:300 ~max_depth:50 ()
   in
   let viewport = Camera.create_viewport camera in
   Ray.rays_to_colors ~progress_bar scene camera viewport |> convert_colors
+
+type task = { ulpix : int * int; subviewport : Camera.viewport }
+
+let worker scene camera pool res_queue () =
+  let rec loop () =
+    match Saturn_lockfree.Queue.pop_opt pool with
+    | None -> ()
+    | Some { ulpix; subviewport } ->
+        (* Format.printf "Worker Got %d %d\n%!" (fst ulpix) (snd ulpix); *)
+        let colors =
+          Ray.rays_to_colors scene camera subviewport |> convert_colors
+        in
+        Saturn_lockfree.Single_consumer_queue.push res_queue (ulpix, colors);
+        loop ()
+  in
+  loop ()
+
+let final_scene_par ~image_width ~ratio ~subviewport_length ~subviewport_width
+    res_queue () =
+  let scene = build_scene () in
+  Format.printf "Subviewport config : %d %d\n%!" subviewport_width
+    subviewport_length;
+  let camera =
+    Camera.create ~defocus_angle:0.1 ~focus_dist:10. ~vfov:20. ~image_width
+      ~ratio ~vup:(Vect.create 0. 1. 0.) ~lookat:(Pos.create 0. 0. 0.)
+      ~lookfrom:(Pos.create 13. 2. 3.) ~nsamples:500 ~max_depth:50 ()
+  in
+  let viewport = Camera.create_viewport camera in
+
+  let divu = image_width / subviewport_width in
+  let divv = image_width / subviewport_length in
+
+  let task_queue = Saturn_lockfree.Queue.create () in
+  let rec build_queue queue u v =
+    if u = divu then ()
+    else if v = divv then build_queue queue (u + 1) 0
+    else
+      let ulpix = (u * subviewport_width, v * subviewport_length) in
+      let subviewport =
+        Camera.create_subviewport ~upper_left:ulpix
+          ~viewport_width:subviewport_width ~viewport_height:subviewport_length
+          viewport
+      in
+      Saturn_lockfree.Queue.push task_queue { ulpix; subviewport };
+      build_queue queue u (v + 1)
+  in
+  build_queue task_queue 0 0;
+  Array.init
+    (Domain.recommended_domain_count () - 1)
+    (fun _ -> Domain.spawn (worker scene camera task_queue res_queue))
