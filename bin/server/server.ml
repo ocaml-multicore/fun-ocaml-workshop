@@ -6,9 +6,6 @@ let cell_size = 128
 let max_pending = cell_size * cell_size * 3
 let width = 1408
 let height = 1408
-let ratio = float_of_int width /. float_of_int height
-(* *)
-
 let () = Random.self_init ()
 let string_of_html html = Format.asprintf "%a" (H.pp ()) html
 
@@ -29,9 +26,7 @@ let knuth_shuffle a =
 let clients = ref []
 
 type state = {
-  current : Ray_tracer.Scene.scene;
-  camera : Ray_tracer.Camera.camera;
-  viewport : Ray_tracer.Camera.viewport;
+  current_seed : int;
   todos : Protocol.sub Queue.t;
   mutable remaining : int;
   is_done : bool array array;
@@ -52,21 +47,11 @@ let make_state () =
                { Protocol.x; y; w = cell_size; h = cell_size })))
   in
   knuth_shuffle arr;
+  let seed = Random.int 1_000_000_000 in
   let todos = Queue.create () in
-  let camera =
-    Ray_tracer.Camera.create ~image_width:width ~ratio ~max_depth:50
-      ~nsamples:20
-      ~lookfrom:(Ray_tracer.Pos.create 0. 0. 0.)
-      ~lookat:(Ray_tracer.Pos.create 0. 0. (-1.))
-      ~vup:(Ray_tracer.Vect.create 0. 1. 0.)
-      ()
-  in
-  let viewport = Ray_tracer.Camera.create_viewport camera in
   Array.iter (fun x -> Queue.add x todos) arr;
   {
-    current = Scenes.random_scene ();
-    camera;
-    viewport;
+    current_seed = seed;
     todos;
     remaining = width * height;
     is_done = Array.make_matrix width height false;
@@ -190,13 +175,10 @@ let () =
                | Some sub ->
                    let job =
                      {
-                       Protocol.task =
-                         {
-                           scene = !state.current;
-                           camera = !state.camera;
-                           viewport = !state.viewport;
-                         };
+                       Protocol.seed = !state.current_seed;
                        sub;
+                       nsamples = 20;
+                       max_depth = 10;
                      }
                    in
                    user.pending <-
@@ -224,34 +206,35 @@ let () =
          Dream.post "/respond" (fun query ->
              let username, user = get_user query in
              let* body = Dream.body query in
-             let { Protocol.rect; result } =
+             let { Protocol.rect; result_seed; result } =
                Result.get_ok
                @@ Protocol.response_of_yojson (Yojson.Safe.from_string body)
              in
-             user_mark_done user rect;
-             if mark_done !state rect > 0 then (
-               Lwt.dont_wait
-                 (fun () ->
-                   Lwt_list.iter_p
-                     (fun ws ->
-                       send ws
-                       @@ Protocol.Update
-                            {
-                              username;
-                              color = user.color;
-                              position = rect;
-                              status = Resolved result;
-                            })
-                     !clients)
-                 (fun _ -> ());
-               if !state.remaining <= 0 then (
-                 Queue.clear !state.todos;
+             if result_seed = !state.current_seed then (
+               user_mark_done user rect;
+               if mark_done !state rect > 0 then (
                  Lwt.dont_wait
                    (fun () ->
-                     let+ () = Lwt_unix.sleep 3.0 in
-                     Hashtbl.clear users;
-                     state := make_state ())
-                   (fun _ -> ())));
+                     Lwt_list.iter_p
+                       (fun ws ->
+                         send ws
+                         @@ Protocol.Update
+                              {
+                                username;
+                                color = user.color;
+                                position = rect;
+                                status = Resolved result;
+                              })
+                       !clients)
+                   (fun _ -> ());
+                 if !state.remaining <= 0 then (
+                   Queue.clear !state.todos;
+                   Lwt.dont_wait
+                     (fun () ->
+                       let+ () = Lwt_unix.sleep 3.0 in
+                       Hashtbl.clear users;
+                       state := make_state ())
+                     (fun _ -> ()))));
              Lwt.return
              @@ Dream.response ~headers:[ ("Content-Type", "text/json") ] "");
          Dream.get "/style.css" (fun _ ->

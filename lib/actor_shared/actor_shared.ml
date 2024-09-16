@@ -9,10 +9,11 @@ end
 module type S = sig
   type client
   type job
+  type image
 
   val request : client -> job
-  val respond : client -> job -> Image.image -> unit
-  val render : job -> Image.image
+  val respond : client -> job -> image -> unit
+  val render : job -> image
   val vsplit : job -> job * job
   val hsplit : job -> job * job
 end
@@ -23,6 +24,7 @@ module Make (Client : HTTP_CLIENT) = struct
   type net = Client.t
   type client = { net : net; host : Uri.t }
   type job = Protocol.job
+  type image = Image.image
 
   let client ?(uri = "localhost:8080") ~username net =
     {
@@ -41,7 +43,7 @@ module Make (Client : HTTP_CLIENT) = struct
     | Ok job -> job
     | Error _ -> failwith "invalid json"
 
-  let respond { net; host; _ } { Protocol.sub = req; _ } img =
+  let respond { net; host; _ } { Protocol.sub = req; seed; _ } img =
     let result =
       if img.Image.width = 1 && img.Image.height = 1 then
         Image.read_rgb img 0 0 (fun r g b ->
@@ -54,7 +56,7 @@ module Make (Client : HTTP_CLIENT) = struct
     let host = Uri.with_path host (Uri.path host ^ "respond") in
     let body =
       Yojson.Safe.to_string
-      @@ Protocol.response_to_yojson { rect = req; result }
+      @@ Protocol.response_to_yojson { rect = req; result_seed = seed; result }
     in
     let _ = Client.post net host ~body in
     ()
@@ -85,8 +87,10 @@ module Make (Client : HTTP_CLIENT) = struct
   open Ray_tracer
 
   let render job =
-    let { Protocol.task = { scene; camera; viewport }; sub = { x; y; w; h } } =
-      job
+    let { nsamples; max_depth; seed; sub = { x; y; w; h } } = job in
+    let { Protocol.scene; camera; viewport } =
+      Random.init seed;
+      Example.final_scene ~image_width:1408 ~ratio:1.0 ~nsamples ~max_depth ()
     in
     let subviewport =
       Camera.create_subviewport ~upper_left:(x, y) ~viewport_width:w
