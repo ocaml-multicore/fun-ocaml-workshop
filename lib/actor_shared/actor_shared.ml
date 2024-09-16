@@ -8,15 +8,31 @@ end
 
 module type S = sig
   type client
+  (** Type representing a client connected to the server. *)
+
   type job
+  (** Type representing a job to raytrace part of an image. *)
+
   type image
+  (** Type representing a rendered image *)
 
   val request : client -> job
+  (** [request] client returns a [job] to be done. *)
+
   val render : job -> image
+  (** [render job] returns an [image] by raytracing. *)
+
   val respond : client -> image -> unit
+  (** [respond client image] send the rendered image to the server. *)
+
   val vsplit : job -> (job * job) option
+  (** [vsplit job] returns two half-smaller jobs splitted vertically, or [None] if job is too small. *)
+
   val hsplit : job -> (job * job) option
+  (** [hsplit job] returns two half-smaller jobs splitted horizontally, or [None] if job is too small. *)
+
   val join : image -> image -> image
+  (** [join a b] join the two images [a] and [b] into a single one. *)
 end
 
 module Make (Client : HTTP_CLIENT) = struct
