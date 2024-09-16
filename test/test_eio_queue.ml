@@ -1,4 +1,3 @@
-open Eio
 module Actor = Actor_eio
 module Queue = Saturn.Queue
 
@@ -18,10 +17,6 @@ let () =
   let client = Actor.client env ~username in
   let queue = Queue.create () in
 
-  Fiber.all
-  @@ List.init (Domain.recommended_domain_count ())
-  @@ fun _ () ->
-  Domain_manager.run (Stdenv.domain_mgr env) @@ fun () ->
   while true do
     match Queue.pop_opt queue with
     | Some job ->

@@ -11,9 +11,4 @@
 (executable
  (name test_picos_io_cohttp)
  (modules test_picos_io_cohttp)
- (libraries
-  actor_picos_io_cohttp
-  imagelib
-  picos_mux.multififo
-  picos_std.structured
-  ray_tracer))
+ (libraries actor_picos_io_cohttp imagelib picos_mux.fifo ray_tracer))
