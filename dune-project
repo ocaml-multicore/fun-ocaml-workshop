@@ -22,7 +22,11 @@
   (ocaml
    (>= 4.14))
   (graphics
-   (>= 5.1.2))))
+   (>= 5.1.2))
+  (ppx_deriving_yojson
+   (>= 3.7.0))
+  (saturn_lockfree
+   (>= 0.5.0))))
 
 (package
  (name funocaml_protocol)
@@ -31,7 +35,9 @@
   (yojson
    (>= 2.0.0))
   (ppx_deriving_yojson
-   (>= 3.7.0))))
+   (>= 3.7.0))
+   (ray_tracer
+   (= :version))))
 
 (package
  (name funocaml_actor_shared)

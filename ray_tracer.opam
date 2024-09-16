@@ -12,6 +12,8 @@ depends: [
   "dune" {>= "3.15"}
   "ocaml" {>= "4.14"}
   "graphics" {>= "5.1.2"}
+  "ppx_deriving_yojson" {>= "3.7.0"}
+  "saturn_lockfree" {>= "0.5.0"}
   "odoc" {with-doc}
 ]
 build: [
