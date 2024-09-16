@@ -184,13 +184,14 @@ let worker scene camera pool res_queue () =
 
 let final_scene_par ~image_width ~ratio ~subviewport_length ~subviewport_width
     res_queue () =
-  let scene = build_scene () in
-  Format.printf "Subviewport config : %d %d\n%!" subviewport_width
-    subviewport_length;
+  let x_range = (-10., 8.) in
+  let y_range = (-4., 4.) in
+  let scene = Scene.random_scene ~max_nobj:100 ~x_range ~y_range () in
+
   let camera =
     Camera.create ~defocus_angle:0.1 ~focus_dist:10. ~vfov:20. ~image_width
       ~ratio ~vup:(Vect.create 0. 1. 0.) ~lookat:(Pos.create 0. 0. 0.)
-      ~lookfrom:(Pos.create 13. 2. 3.) ~nsamples:500 ~max_depth:50 ()
+      ~lookfrom:(Pos.create 13. 2. 3.) ~nsamples:100 ~max_depth:20 ()
   in
   let viewport = Camera.create_viewport camera in
 

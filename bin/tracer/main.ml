@@ -61,7 +61,6 @@ let example ~number =
         match Saturn_lockfree.Single_consumer_queue.pop_opt res_queue with
         | None -> Unix.sleep 1
         | Some ((x, y), colors) ->
-            Format.printf "Got %d %d\n%!" x y;
             do_image colors x (image_height - y);
             incr count
       done;

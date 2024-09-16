@@ -31,3 +31,10 @@ val to_string : scene -> string
 
 val of_string : string -> scene
 (** [of_string yojson_scene] *)
+
+val random_scene :
+  ?x_range:float * float ->
+  ?y_range:float * float ->
+  ?max_nobj:int ->
+  unit ->
+  scene

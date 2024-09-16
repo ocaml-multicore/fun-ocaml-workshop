@@ -186,12 +186,6 @@ let[@inline] print_progress height jj =
   if jj mod 100 = 0 then
     Format.printf "\rScanlines remaining: %d @." (height - jj)
 
-(* point3 defocus_disk_sample() const {
-       // Returns a random point in the camera defocus disk.
-       auto p = random_in_unit_disk();
-       return center + (p[0] * defocus_disk_u) + (p[1] * defocus_disk_v);
-   }
-*)
 let[@inline] defocus_disk_sample (camera : Camera.camera) =
   let p = Vect.random_in_unit_disk () in
   let x = Vect.scale p.xv camera.defocus_disk_u in
