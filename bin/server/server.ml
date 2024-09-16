@@ -1,7 +1,9 @@
 open Lwt.Syntax
 module H = Tyxml_html
 
+let timeout = 1.0
 let cell_size = 128
+let max_pending = cell_size * cell_size * 3
 let width = 1408
 let height = 1408
 let ratio = float_of_int width /. float_of_int height
@@ -94,19 +96,44 @@ let rec pop () =
       Queue.push sub_image state.todos;
       Some sub_image
 
-let mark_done (rect : Protocol.sub) =
-  let updated = ref false in
-  let state = !state in
+let mark_done state (rect : Protocol.sub) =
+  let updated = ref 0 in
   let img = state.is_done in
   for y = rect.y to rect.y + rect.h - 1 do
     for x = rect.x to rect.x + rect.w - 1 do
       if not img.(y).(x) then (
-        updated := true;
+        incr updated;
         img.(y).(x) <- true;
         state.remaining <- state.remaining - 1)
     done
   done;
   !updated
+
+type timestamp = float
+
+type user = {
+  color : string;
+  mutable pending : (timestamp * int) list;
+  has_done : (int * int, unit) Hashtbl.t;
+}
+
+let user_mark_done user { Protocol.x; y; w; h } =
+  let count = ref 0 in
+  for x = x to x + w - 1 do
+    for y = y to y + h - 1 do
+      if not (Hashtbl.mem user.has_done (x, y)) then (
+        Hashtbl.replace user.has_done (x, y) ();
+        incr count)
+    done
+  done;
+  user.pending <- (Unix.gettimeofday (), !count) :: user.pending
+
+let pending_count user =
+  let now = Unix.gettimeofday () in
+  let pending = List.filter (fun (t, _) -> now -. t < timeout) user.pending in
+  let sum = List.fold_left (fun acc (_, c) -> acc + c) 0 pending in
+  user.pending <- pending;
+  sum
 
 let users = Hashtbl.create 16
 
@@ -114,17 +141,18 @@ let get_user query =
   let username =
     match Dream.query query "username" with None -> "" | Some u -> u
   in
-  let color =
+  let user =
     try Hashtbl.find users username
     with Not_found ->
       let hue = mod_float (1.618 *. float (Hashtbl.length users)) 1.0 in
       let hue = 360.0 *. hue in
-      let c = Color.of_hsl hue 0.5 0.5 in
-      let c = Color.to_css_rgba c in
-      Hashtbl.replace users username c;
-      c
+      let color = Color.of_hsl hue 0.5 0.5 in
+      let color = Color.to_css_rgba color in
+      let user = { color; pending = []; has_done = Hashtbl.create 0 } in
+      Hashtbl.replace users username user;
+      user
   in
-  (username, color)
+  (username, user)
 
 let () =
   Dream.run @@ Dream.logger
@@ -147,53 +175,60 @@ let () =
                            div ~a:[ a_id "image" ] [];
                          ])));
          Dream.get "/request" (fun query ->
-             let username, color = get_user query in
-             match pop () with
-             | None ->
-                 Lwt.return
-                   (Dream.response
-                      ~headers:[ ("Content-Type", "text/json") ]
-                      "")
-             | Some sub ->
-                 let job =
-                   {
-                     Protocol.task =
-                       {
-                         scene = !state.current;
-                         camera = !state.camera;
-                         viewport = !state.viewport;
-                       };
-                     sub;
-                   }
-                 in
-                 let () =
-                   Lwt.dont_wait
-                     (fun () ->
-                       Lwt_list.iter_p
-                         (fun ws ->
-                           send ws
-                           @@ Protocol.Update
-                                {
-                                  username;
-                                  color;
-                                  position = sub;
-                                  status = Start;
-                                })
-                         !clients)
-                     (fun _ -> ())
-                 in
-                 Lwt.return
-                   (Dream.response
-                      ~headers:[ ("Content-Type", "text/json") ]
-                      (Yojson.Safe.to_string @@ Protocol.job_to_yojson job)));
+             let username, user = get_user query in
+             if pending_count user >= max_pending then
+               Lwt.return
+                 (Dream.response ~headers:[ ("Content-Type", "text/json") ] "")
+             else
+               match pop () with
+               | None ->
+                   Lwt.return
+                     (Dream.response
+                        ~headers:[ ("Content-Type", "text/json") ]
+                        "")
+               | Some sub ->
+                   let job =
+                     {
+                       Protocol.task =
+                         {
+                           scene = !state.current;
+                           camera = !state.camera;
+                           viewport = !state.viewport;
+                         };
+                       sub;
+                     }
+                   in
+                   user.pending <-
+                     (Unix.gettimeofday (), sub.w * sub.h) :: user.pending;
+                   let () =
+                     Lwt.dont_wait
+                       (fun () ->
+                         Lwt_list.iter_p
+                           (fun ws ->
+                             send ws
+                             @@ Protocol.Update
+                                  {
+                                    username;
+                                    color = user.color;
+                                    position = sub;
+                                    status = Start;
+                                  })
+                           !clients)
+                       (fun _ -> ())
+                   in
+                   Lwt.return
+                     (Dream.response
+                        ~headers:[ ("Content-Type", "text/json") ]
+                        (Yojson.Safe.to_string @@ Protocol.job_to_yojson job)));
          Dream.post "/respond" (fun query ->
-             let username, color = get_user query in
+             let username, user = get_user query in
              let* body = Dream.body query in
              let { Protocol.rect; result } =
                Result.get_ok
                @@ Protocol.response_of_yojson (Yojson.Safe.from_string body)
              in
-             if mark_done rect then (
+             user_mark_done user rect;
+             if mark_done !state rect > 0 then (
                Lwt.dont_wait
                  (fun () ->
                    Lwt_list.iter_p
@@ -202,7 +237,7 @@ let () =
                        @@ Protocol.Update
                             {
                               username;
-                              color;
+                              color = user.color;
                               position = rect;
                               status = Resolved result;
                             })
@@ -213,6 +248,7 @@ let () =
                  Lwt.dont_wait
                    (fun () ->
                      let+ () = Lwt_unix.sleep 3.0 in
+                     Hashtbl.clear users;
                      state := make_state ())
                    (fun _ -> ())));
              Lwt.return
