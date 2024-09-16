@@ -16,7 +16,7 @@ include Actor_shared.Make (struct
   let sleep t seconds = Eio.Time.sleep t#clock seconds
 end)
 
-let client env ~username =
+let client ?uri ~username env =
   let net = Cohttp_eio.Client.make ~https:None env#net in
   let t =
     object
@@ -24,4 +24,4 @@ let client env ~username =
       method net = net
     end
   in
-  client t ~username
+  client ?uri ~username t

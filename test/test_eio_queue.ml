@@ -1,6 +1,9 @@
 module Actor = Actor_eio
 module Queue = Saturn.Queue
 
+let username = Sys.argv.(1)
+let uri = try Some Sys.argv.(2) with _ -> None
+
 let rec split sub n =
   if n = 0 then [ sub ]
   else
@@ -10,13 +13,10 @@ let rec split sub n =
     let n = n - 1 in
     split left n @ split right n
 
-let username = Sys.argv.(1)
-
 let () =
   Eio_main.run @@ fun env ->
-  let client = Actor.client env ~username in
+  let client = Actor.client ?uri ~username env in
   let queue = Queue.create () in
-
   while true do
     match Queue.pop_opt queue with
     | Some job ->

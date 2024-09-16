@@ -126,7 +126,7 @@ let user_mark_done user { Protocol.x; y; w; h } =
         incr count)
     done
   done;
-  user.pending <- (Unix.gettimeofday (), !count) :: user.pending
+  user.pending <- (Unix.gettimeofday (), - !count) :: user.pending
 
 let pending_count user =
   let now = Unix.gettimeofday () in
@@ -155,7 +155,8 @@ let get_user query =
   (username, user)
 
 let () =
-  Dream.run @@ Dream.logger
+  Dream.run ~port:8080 ~interface:"0.0.0.0"
+  @@ Dream.logger
   @@ Dream.router
        [
          Dream.get "/" (fun _ ->

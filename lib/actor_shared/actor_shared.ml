@@ -24,12 +24,12 @@ module Make (Client : HTTP_CLIENT) = struct
   type client = { net : net; host : Uri.t }
   type job = Protocol.job
 
-  let client net ~username =
+  let client ?(uri = "localhost:8080") ~username net =
     {
       net;
       host =
         Uri.add_query_param'
-          (Uri.of_string "http://localhost:8080/")
+          (Uri.of_string ("http://" ^ uri))
           ("username", username);
     }
 

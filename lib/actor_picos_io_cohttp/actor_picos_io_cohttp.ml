@@ -11,4 +11,4 @@ include Actor_shared.Make (struct
   let sleep () seconds = Picos_std_structured.Control.sleep ~seconds
 end)
 
-let client = client ()
+let client ?uri ~username () = client ?uri ~username ()
