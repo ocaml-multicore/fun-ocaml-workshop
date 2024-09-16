@@ -9,5 +9,5 @@ let () =
   while true do
     let sub = Actor.request client in
     let img = Actor.render sub in
-    Actor.respond client sub img
+    Actor.respond client img
   done

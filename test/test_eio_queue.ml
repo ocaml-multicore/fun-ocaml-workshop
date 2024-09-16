@@ -7,11 +7,11 @@ let uri = try Some Sys.argv.(2) with _ -> None
 let rec split sub n =
   if n = 0 then [ sub ]
   else
-    let left, right =
-      if Random.bool () then Actor.hsplit sub else Actor.vsplit sub
-    in
-    let n = n - 1 in
-    split left n @ split right n
+    match if Random.bool () then Actor.hsplit sub else Actor.vsplit sub with
+    | Some (left, right) ->
+        let n = n - 1 in
+        split left n @ split right n
+    | None -> [ sub ]
 
 let () =
   Eio_main.run @@ fun env ->
@@ -21,7 +21,7 @@ let () =
     match Queue.pop_opt queue with
     | Some job ->
         let img = Actor.render job in
-        Actor.respond client job img
+        Actor.respond client img
     | None ->
         let job = Actor.request client in
         let parts = split job 3 in

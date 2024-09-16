@@ -205,38 +205,41 @@ let () =
                         (Yojson.Safe.to_string @@ Protocol.job_to_yojson job)));
          Dream.post "/respond" (fun query ->
              let username, user = get_user query in
-             let* body = Dream.body query in
-             let { Protocol.rect; result_seed; result } =
+             let+ body = Dream.body query in
+             let lst =
                Result.get_ok
                @@ Protocol.response_of_yojson (Yojson.Safe.from_string body)
              in
-             if result_seed = !state.current_seed then (
-               user_mark_done user rect;
-               if mark_done !state rect > 0 then (
-                 Lwt.dont_wait
-                   (fun () ->
-                     Lwt_list.iter_p
-                       (fun ws ->
-                         send ws
-                         @@ Protocol.Update
-                              {
-                                username;
-                                color = user.color;
-                                position = rect;
-                                status = Resolved result;
-                              })
-                       !clients)
-                   (fun _ -> ());
-                 if !state.remaining <= 0 then (
-                   Queue.clear !state.todos;
-                   Lwt.dont_wait
-                     (fun () ->
-                       let+ () = Lwt_unix.sleep 3.0 in
-                       Hashtbl.clear users;
-                       state := make_state ())
-                     (fun _ -> ()))));
-             Lwt.return
-             @@ Dream.response ~headers:[ ("Content-Type", "text/json") ] "");
+             let () =
+               lst
+               |> List.iter (fun { Protocol.rect; result_seed; result } ->
+                      if result_seed = !state.current_seed then (
+                        user_mark_done user rect;
+                        if mark_done !state rect > 0 then (
+                          Lwt.dont_wait
+                            (fun () ->
+                              Lwt_list.iter_p
+                                (fun ws ->
+                                  send ws
+                                  @@ Protocol.Update
+                                       {
+                                         username;
+                                         color = user.color;
+                                         position = rect;
+                                         status = Resolved result;
+                                       })
+                                !clients)
+                            (fun _ -> ());
+                          if !state.remaining <= 0 then (
+                            Queue.clear !state.todos;
+                            Lwt.dont_wait
+                              (fun () ->
+                                let+ () = Lwt_unix.sleep 3.0 in
+                                Hashtbl.clear users;
+                                state := make_state ())
+                              (fun _ -> ())))))
+             in
+             Dream.response ~headers:[ ("Content-Type", "text/json") ] "");
          Dream.get "/style.css" (fun _ ->
              Lwt.return
              @@ Dream.response

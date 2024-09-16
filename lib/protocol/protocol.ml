@@ -30,5 +30,7 @@ let to_string msg =
   let msg = to_yojson msg in
   Yojson.Safe.to_string msg
 
-type response = { rect : sub; result_seed : int; result : string }
+type response_ = { rect : sub; result_seed : int; result : string }
 [@@deriving yojson]
+
+type response = response_ list [@@deriving yojson]
