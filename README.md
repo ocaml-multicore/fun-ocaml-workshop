@@ -94,6 +94,8 @@ structures.  Kcas also provides blocking data structures that work with your
 scheduler either through domain-local-await (supported by Eio) or <a
 href="https://github.com/ocaml-multicore/kcas/pull/204">through Picos</a>.
 
+If you use a non-blocking data structure, you might need to yield.
+
 Which is better for parallelism? FIFO or LIFO?</details>
 
 ## 5. More speedups?
@@ -120,4 +122,4 @@ Ideas:
 
 - Optimize the ray tracer.
 
-- Go wild, implement fractal generator for scenes!
+- Go wild, implement a fractal generator for scenes!
