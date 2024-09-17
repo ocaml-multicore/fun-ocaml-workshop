@@ -139,8 +139,10 @@ let get_user query =
   in
   (username, user)
 
+let interface = try Some Sys.argv.(1) with _ -> None
+
 let () =
-  Dream.run ~port:8080 ~interface:"0.0.0.0"
+  Dream.run ~port:8080 ?interface
   @@ Dream.logger
   @@ Dream.router
        [
