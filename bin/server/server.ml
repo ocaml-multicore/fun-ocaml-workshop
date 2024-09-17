@@ -3,6 +3,8 @@ module H = Tyxml_html
 
 let timeout = 1.0
 let cell_size = 128
+let nsamples = 20
+let max_depth = 10
 let max_pending = cell_size * cell_size * 3
 let width = 1408
 let height = 1408
@@ -26,6 +28,7 @@ let knuth_shuffle a =
 let clients = ref []
 
 type state = {
+  current_task : Protocol.task;
   current_seed : int;
   todos : Protocol.sub Queue.t;
   mutable remaining : int;
@@ -51,6 +54,9 @@ let make_state () =
   let todos = Queue.create () in
   Array.iter (fun x -> Queue.add x todos) arr;
   {
+    current_task =
+      Example_scene.final_scene ~image_width:width ~ratio:1.0 ~nsamples
+        ~max_depth ();
     current_seed = seed;
     todos;
     remaining = width * height;
@@ -177,10 +183,9 @@ let () =
                | Some sub ->
                    let job =
                      {
-                       Protocol.seed = !state.current_seed;
+                       Protocol.task = !state.current_task;
+                       seed = !state.current_seed;
                        sub;
-                       nsamples = 20;
-                       max_depth = 10;
                      }
                    in
                    user.pending <-

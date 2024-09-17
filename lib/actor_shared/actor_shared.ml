@@ -110,16 +110,18 @@ module Make (Client : HTTP_CLIENT) = struct
     [ { Protocol.rect; result_seed = seed; result } ]
 
   let render job =
-    let { nsamples; max_depth; seed; sub = { x; y; w; h } } = job in
-    let { Protocol.scene; camera; viewport } =
-      Random.init seed;
-      Example.final_scene ~image_width:1408 ~ratio:1.0 ~nsamples ~max_depth ()
+    let {
+      Protocol.task = { scene; camera; viewport };
+      seed;
+      sub = { x; y; w; h };
+    } =
+      job
     in
     let subviewport =
       Camera.create_subviewport ~upper_left:(x, y) ~viewport_width:w
         ~viewport_height:h viewport
     in
-    let arr = Ray.rays_to_colors ~progress_bar:true scene camera subviewport in
+    let arr = Ray.rays_to_colors ~progress_bar:false scene camera subviewport in
     let img = Image.create_rgb w h in
     for x = 0 to w - 1 do
       for y = 0 to h - 1 do

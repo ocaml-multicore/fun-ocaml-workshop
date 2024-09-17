@@ -8,9 +8,7 @@ type task = {
 [@@deriving yojson]
 
 type sub = { x : int; y : int; w : int; h : int } [@@deriving yojson]
-
-type job = { nsamples : int; max_depth : int; seed : int; sub : sub }
-[@@deriving yojson]
+type job = { task : task; seed : int; sub : sub } [@@deriving yojson]
 
 type t =
   | Fresh
