@@ -106,3 +106,12 @@ If not, figure out the bottlenecks and modify your program to avoid them.
 
 Let's try to run our actors against the server to render some more complex
 scenes.
+
+## 7. More challenge?
+
+Ideas:
+
+- Use [Domainslib](https://github.com/ocaml-multicore/domainslib) or raw domains
+  to parallelize rendering.
+
+- Optimize the ray tracer.
