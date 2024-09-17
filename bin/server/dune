@@ -2,7 +2,7 @@
  (public_name funocaml_server)
  (package funocaml_server)
  (name server)
- (libraries protocol dream tyxml color)
+ (libraries protocol dream tyxml color saturn)
  (preprocess
   (pps ppx_blob))
  (preprocessor_deps style.css ../front/front.bc.js))

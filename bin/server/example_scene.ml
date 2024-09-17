@@ -76,3 +76,16 @@ let final_scene ~image_width ~ratio ~nsamples ~max_depth () =
   in
   let viewport = Camera.create_viewport camera in
   { Protocol.scene; camera; viewport }
+
+let final_scene_2 ~image_width ~ratio ~nsamples ~max_depth () =
+  let x_range = (-10., 8.) in
+  let y_range = (-4., 4.) in
+  let scene = Scene.random_scene ~max_nobj:200 ~x_range ~y_range () in
+
+  let camera =
+    Camera.create ~defocus_angle:0.1 ~focus_dist:10. ~vfov:20. ~image_width
+      ~ratio ~vup:(Vect.create 0. 1. 0.) ~lookat:(Pos.create 0. 0. 0.)
+      ~lookfrom:(Pos.create 13. 2. 3.) ~nsamples ~max_depth ()
+  in
+  let viewport = Camera.create_viewport camera in
+  { Protocol.scene; camera; viewport }
