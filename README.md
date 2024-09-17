@@ -111,7 +111,13 @@ scenes.
 
 Ideas:
 
+- Try other schedulers like [Miou](https://github.com/robur-coop/miou),
+  [Moonpool](https://github.com/c-cube/moonpool), or
+  [Riot](https://github.com/riot-ml/riot).
+
 - Use [Domainslib](https://github.com/ocaml-multicore/domainslib) or raw domains
   to parallelize rendering.
 
 - Optimize the ray tracer.
+
+- Go wild, implement fractal generator for scenes!
