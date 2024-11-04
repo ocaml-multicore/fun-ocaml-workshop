@@ -2,10 +2,11 @@ open Lwt.Syntax
 module H = Tyxml_html
 
 let timeout = 1.0
-let cell_size = 128
-let nsamples = 20
+let cell_width = 1408
+let cell_height = 16
+let nsamples = 100
 let max_depth = 10
-let max_pending = cell_size * cell_size * 3
+let max_pending = cell_width * cell_height
 let width = 1408
 let height = 1408
 let () = Random.self_init ()
@@ -43,11 +44,11 @@ let make_state () =
   in
   let arr =
     Array.concat
-      (List.init (width / cell_size) (fun x ->
-           Array.init (height / cell_size) (fun y ->
-               let x = x * cell_size in
-               let y = y * cell_size in
-               { Protocol.x; y; w = cell_size; h = cell_size })))
+      (List.init (width / cell_width) (fun x ->
+           Array.init (height / cell_height) (fun y ->
+               let x = x * cell_width in
+               let y = y * cell_height in
+               { Protocol.x; y; w = cell_width; h = cell_height })))
   in
   knuth_shuffle arr;
   let seed = Random.int 1_000_000_000 in
@@ -55,7 +56,7 @@ let make_state () =
   Array.iter (fun x -> Queue.add x todos) arr;
   {
     current_task =
-      Example_scene.final_scene ~image_width:width ~ratio:1.0 ~nsamples
+      Example_scene.final_scene_2 ~image_width:width ~ratio:1.0 ~nsamples
         ~max_depth ();
     current_seed = seed;
     todos;
